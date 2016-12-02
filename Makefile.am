@@ -409,6 +409,9 @@ gridcalib0.jpg gridcalib1.jpg gridcalib2.jpg gridcalib3.jpg gridcalib4.jpg gridc
 tensor: tensor.cc
 	$(CXX) -O -o $@ $<
 
+ranges: ranges.cc
+	$(CXX) -O -o $@ $<
+
 cbreakdown: cbreakdown.cc
 	$(CXX) -O -o $@ $<
 
@@ -438,9 +441,9 @@ MAINTAINERCLEANFILES = \
 # echo -e ?
 
 %.aux:
-	echo '\\citation{RefWorks:Undefined}' > $@
-	echo '\\bibstyle{alpha}' >> $@
-	echo '\\bibdata{thesis}' >> $@
+	echo '\citation{RefWorks:Undefined}' > $@
+	echo '\bibstyle{alpha}' >> $@
+	echo '\bibdata{thesis}' >> $@
 
 %.idx:
 	touch $@
