@@ -1,0 +1,8 @@
+digraph sfloatrgb {
+  RGB -> FLOAT;
+  FLOAT -> SINGLE;
+}
+
+
+
+

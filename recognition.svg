@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="609.33252"
+   height="258.46545"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/jan/Documents/work/oscon08"
+   sodipodi:docname="recognition.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4952561"
+     inkscape:cx="308.07814"
+     inkscape:cy="137.36354"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1272"
+     inkscape:window-height="907"
+     inkscape:window-x="0"
+     inkscape:window-y="0">
+    <sodipodi:guide
+       orientation="horizontal"
+       position="1025.7143"
+       id="guide2480" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(356.85712,-510.97157)">
+    <g
+       id="g9375"
+       transform="matrix(0.5002626,0,0,0.5002626,-170.33064,275.854)">
+      <g
+         transform="translate(-552.85714,-149.71428)"
+         id="g8316">
+        <image
+           y="728.36218"
+           x="180"
+           id="image2258"
+           height="288"
+           width="384"
+           sodipodi:absref="/tmp/x/recognition1.png"
+           xlink:href="recognition1.png" />
+        <rect
+           style="opacity:1;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.22565365;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="rect2482"
+           width="382.77435"
+           height="286.77435"
+           x="-563.38721"
+           y="728.97498"
+           ry="2.5317586e-17"
+           transform="scale(-1,1)" />
+      </g>
+      <text
+         id="text9347"
+         y="500.37894"
+         x="-288.85516"
+         style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="500.37894"
+           x="-288.85516"
+           id="tspan9349"
+           sodipodi:role="line">acquisition</tspan></text>
+    </g>
+    <g
+       id="g9382"
+       transform="matrix(0.5002626,0,0,0.5002626,-230.85822,295.86449)">
+      <g
+         transform="translate(-573.85711,114.2857)"
+         id="g8328">
+        <image
+           y="464.36218"
+           x="600"
+           id="image2331"
+           height="288"
+           width="384"
+           sodipodi:absref="/tmp/x/recognition2.png"
+           xlink:href="recognition2.png" />
+        <rect
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.22565365;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="rect8324"
+           width="382.77435"
+           height="286.77435"
+           x="-983.38721"
+           y="464.97501"
+           ry="2.5317586e-17"
+           transform="scale(-1,1)" />
+      </g>
+      <text
+         id="text9351"
+         y="500.37894"
+         x="80.418297"
+         style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="500.37894"
+           x="80.418297"
+           id="tspan9353"
+           sodipodi:role="line">segmentation</tspan></text>
+    </g>
+    <g
+       id="g9389"
+       transform="matrix(0.5002626,0,0,0.5002626,-291.3858,315.87499)">
+      <g
+         transform="translate(25.142928,14.28572)"
+         id="g8342">
+        <image
+           y="564.36218"
+           x="400"
+           id="image2404"
+           height="288"
+           width="384"
+           sodipodi:absref="/tmp/x/recognition3.png"
+           xlink:href="recognition3.png" />
+        <rect
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.22565365;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="rect8336"
+           width="382.77435"
+           height="286.77435"
+           x="-783.38721"
+           y="564.97498"
+           ry="2.5317586e-17"
+           transform="scale(-1,1)" />
+      </g>
+      <text
+         id="text9355"
+         y="479.25601"
+         x="617.75818"
+         style="font-size:40px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="479.25601"
+           x="617.75818"
+           id="tspan9357"
+           sodipodi:role="line">feature</tspan><tspan
+           id="tspan9365"
+           y="529.25601"
+           x="617.75818"
+           sodipodi:role="line">extraction</tspan></text>
+    </g>
+    <g
+       id="g9397"
+       transform="matrix(0.5002626,0,0,0.5002626,-351.91337,335.8855)">
+      <g
+         id="g9367">
+        <g
+           id="g8346"
+           transform="translate(624.14296,-105.71428)">
+          <image
+             xlink:href="recognition4.png"
+             sodipodi:absref="/tmp/x/recognition4.png"
+             width="384"
+             height="288"
+             id="image2477"
+             x="200"
+             y="684.36218" />
+          <rect
+             transform="scale(-1,1)"
+             ry="2.5317586e-17"
+             y="684.97498"
+             x="-583.38721"
+             height="286.77435"
+             width="382.77435"
+             id="rect8340"
+             style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.22565365;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+        </g>
+        <g
+           id="g9321"
+           transform="translate(896.85714,205.71428)">
+          <image
+             xlink:href="recognition0.png"
+             sodipodi:absref="/tmp/x/recognition0.png"
+             width="101"
+             height="71"
+             id="image2200"
+             x="200"
+             y="381.36218" />
+          <rect
+             ry="2.2219795e-17"
+             y="381.75647"
+             x="200.39429"
+             height="70.211411"
+             width="100.21141"
+             id="rect8350"
+             style="opacity:1;fill:none;stroke:#000000;stroke-width:0.78858572;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+        </g>
+      </g>
+      <text
+         id="text9359"
+         y="479.37695"
+         x="1016.0453"
+         style="font-size:40px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="479.37695"
+           x="1016.0453"
+           id="tspan9361"
+           sodipodi:role="line">object</tspan><tspan
+           id="tspan9363"
+           y="529.37695"
+           x="1016.0453"
+           sodipodi:role="line">recognition</tspan></text>
+    </g>
+  </g>
+</svg>

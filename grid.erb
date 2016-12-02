@@ -1,0 +1,97 @@
+global_settings {
+   ambient_light rgb < 1.0, 1.0, 1.0 >
+   assumed_gamma 2.2
+   max_trace_level 5
+}
+background { colour rgb < 0.6, 0.6, 0.8 > }
+// background { colour rgb < 0.1, 0.1, 0.1 > }
+camera {
+   location    < 0, 0, 0 >
+   look_at     <  1,  0,  0 >
+   angle 48.52258170495558
+}
+light_source {
+  < -200, 400, 160 >
+  rgb < 1.0, 1.0, 1.0 >
+}
+union {
+  union {
+    box {
+      <-0.01, -0.5, -0.5>, <0.01, 0.5, 0.5>
+      pigment {
+        image_map {
+          png "chequer.png"
+        }
+        rotate 90 * y
+        translate <0.0, -0.5, -0.5>
+      }
+      finish {
+        ambient 0.3
+        diffuse 0.7
+      }
+      // z, y, x
+      scale <1.0, 6.0, 9.0>
+      rotate -90.0 * y
+      scale -y
+    }
+    union {
+      cylinder {
+        < -0.5, 0, 0 >,
+        <  5.0, 0, 0 >,
+        0.2
+      }
+      cone {
+        < 5.0, 0, 0 >,
+        0.5,
+        < 5.5, 0, 0 >,
+        0.0
+      }
+      pigment { colour rgb < 1, 0, 0 > }
+      finish {
+        ambient 0.5
+        diffuse 0.5
+      }
+    }
+    union {
+      cylinder {
+        < 0, -0.5, 0 >,
+        < 0, 5.0, 0 >,
+        0.2
+      }
+      cone {
+        < 0, 5.0, 0 >,
+        0.5,
+        < 0, 5.5, 0 >,
+        0.0
+      }
+      pigment { colour rgb < 0, 1, 0 > }
+      finish {
+        ambient 0.5
+        diffuse 0.5
+      }
+    }
+    union {
+      cylinder {
+        < 0, 0, -0.5 >,
+        < 0, 0, 5.0 >,
+        0.2
+      }
+      cone {
+        < 0, 0, 5.0 >,
+        0.5,
+        < 0, 0, 5.5 >,
+        0.0
+      }
+      pigment { colour rgb < 0, 0, 1 > }
+      finish {
+        ambient 0.5
+        diffuse 0.5
+      }
+      scale -z
+    }
+  }
+  <%=matrix%>
+  scale -y
+  rotate 90 * y
+}
+

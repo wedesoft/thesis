@@ -1,0 +1,4 @@
+digraph int {
+  INT -> 16;
+  INT -> SIGNED;
+}

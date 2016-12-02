@@ -1,0 +1,74 @@
+\subsection{malloc\_ext.rb}\label{cha:malloc-ext-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+class String
+  unless method_defined? :bytesize
+    def bytesize
+      size
+    end
+  end
+end
+module Hornetseye
+  class Malloc
+    class << self
+      def new( size )
+        retval = orig_new size
+        retval.instance_eval { @size = size }
+        retval
+      end
+      private :orig_new
+    end
+    attr_reader :size
+    def inspect
+      "Malloc(#{@size})"
+    end
+    def dup
+      retval = Malloc.new @size
+      retval.write self
+      retval
+    end
+    def to_s
+      inspect
+    end
+    def export
+      read @size
+    end
+    def +( offset )
+      if offset > @size
+        raise "Offset must not be more than #{@size} (but was #{offset})"
+      end
+      mark, size = self, @size - offset
+      retval = orig_plus offset
+      retval.instance_eval { @mark, @size = mark, size }
+      retval
+    end
+    private :orig_plus
+    def read( length )
+      raise "Only #{@size} bytes of memory left to read " +
+        "(illegal attempt to read #{length} bytes)" if length > @size
+      orig_read length
+    end
+    private :orig_read
+    def write( data )
+      if data.is_a? Malloc
+        if data.size > @size
+          raise "Must not write more than #{@size} bytes of memory " +
+            "(illegal attempt to write #{data.size} bytes)"
+        end
+        orig_write data, data.size
+      else
+        if data.bytesize > @size
+          raise "Must not write more than #{@size} bytes of memory " +
+            "(illegal attempt to write #{data.bytesize} bytes)"
+        end
+        orig_write data
+      end
+    end
+    private :orig_write
+  end
+  def Malloc( size )
+    Malloc.new size
+  end
+  module_function :Malloc
+end
+\end{lstlisting}

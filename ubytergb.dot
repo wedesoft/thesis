@@ -1,0 +1,7 @@
+digraph ubytergb {
+  RGB -> INT;
+  INT -> 8;
+  INT -> UNSIGNED;
+}
+
+

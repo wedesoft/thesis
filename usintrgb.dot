@@ -1,0 +1,8 @@
+digraph usintrgb {
+  RGB -> INT;
+  INT -> 16;
+  INT -> UNSIGNED;
+}
+
+
+

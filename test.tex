@@ -1,0 +1,63 @@
+\documentclass[10pt,a4paper,twoside,openright]{book}
+\usepackage[round,authoryear]{natbib}
+\usepackage[printonlyused,withpage]{acronym}
+
+\newcommand{\cha}[1]{Chapter~\ref{cha:#1}}
+\newcommand{\sex}[1]{Section~\ref{cha:#1}}
+\newcommand{\lst}[1]{Listing~\ref{lst:#1}}
+
+\begin{document}
+\begin{footnotesize}
+Compiled languages require the developer to make changes to the source code, save them in a file, compile that file to create a binary, and then re-run that binary. 
+In contrast, \textbf{dynamically typed} programming languages offer considerable savings in development time. In an \textbf{interpreted language} \emph{the developer can enter code and have it run straight away}.
+\end{footnotesize}
+\begin{itemize}
+\item higher productivity (faster feedback cycle)
+\end{itemize}
+
+\begin{footnotesize}
+It can be argued that the widespread adoption of \textbf{static languages} is currently hampering innovation~\citep{RefWorks:311}. The publication by \citet{RefWorks:480} demonstrates that robotic projects can greatly benefit from the dynamic properties of the Ruby programming language. Interpreted languages not only allow for concise code, they also make interactive manipulation of data possible where one can confirm the results immediately.
+\end{footnotesize}
+\begin{itemize}
+\item statically typed implementations are inflexible
+\end{itemize}
+
+\begin{footnotesize}
+Dynamical typing allows to combine integers, rational numbers, complex numbers, vectors, and matrices in a seamless way.
+The Ruby core library makes use of dynamic typing so that the different data types for representing integers, big numbers, floating point numbers, complex numbers, and vectors work together seamlessly (see \sex{dynnum}).
+\end{footnotesize}
+
+Standard Ruby types have the following drawbacks:
+\begin{itemize}
+\item don't map well to native types (numerical overflow, array boundaries)
+\end{itemize}
+We define new types in section ...
+
+\begin{footnotesize}
+This chapter is about the core of the work presented in this thesis. Starting with memory objects and basic data types, a \ac{DSL} for describing computer vision algorithms is introduced. It is demonstrated how this approach facilitates succinct implementations of machine vision algorithms.
+\end{footnotesize}
+
+\begin{footnotesize}
+\emph{However it will be shown} It was shown in \sex{dynlib} that the performance of the Ruby \ac{VM} is significantly lower than the performance achieved with \acs{GNU} C. It was also indicated that one can achieve higher performance by introducing operations based on uniform arrays with native element types into the target language.
+\end{footnotesize}
+
+Make \emph{3.5 Input/Output} its own chapter.
+
+Performance is addressed:
+\begin{itemize}
+\item defining native types
+\item operations on them
+\item JIT (in 3.6) is needed because AOT-compilation is impossible.
+\item use just-in-time compilation to generate efficient code at run-time
+\end{itemize}
+
+Make \emph{Preprocessing} extra chapter (with other name), implementation of frequently used (popular) algorithms.
+\begin{itemize}
+\item concise (productivity)
+\item performant (hopefully)
+\end{itemize}
+
+Chapter \emph{Applications/Performance/Results} shows some example of complete applications implemented using the library. Furthermore a performance comparison is given.
+
+\end{document}
+

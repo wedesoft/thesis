@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="148.7554"
+   height="148.75542"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="cycle-dynamic.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="4"
+     inkscape:cx="103.06774"
+     inkscape:cy="70.168046"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1270"
+     inkscape:window-height="957"
+     inkscape:window-x="5"
+     inkscape:window-y="27">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3189"
+       visible="true"
+       enabled="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(24.629982,-928.24951)">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.24458694;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect2430"
+       width="148.7554"
+       height="148.75542"
+       x="-24.629982"
+       y="928.24951"
+       ry="0.4958514" />
+    <g
+       id="g3472">
+      <path
+         id="path3242"
+         d="M 50,937.71875 C 14.324095,937.71875 -14.625,966.69908 -14.625,1002.375 C -14.625,1018.1903 -8.9421841,1032.6708 0.5,1043.9062 L 16.0625,1030.8438 C 9.5872522,1023.1461 5.6875,1013.2175 5.6875,1002.375 C 5.6875001,977.91726 25.54224,958.0625 50,958.0625 C 62.134294,958.06249 73.121072,962.96294 81.125,970.875 L 74.375,977.75 L 102.65625,977.46875 L 102.40625,949.1875 L 95.375,956.375 C 83.7026,944.85307 67.680361,937.71874 50,937.71875 z"
+         style="fill:#e6e6e6;fill-opacity:1;stroke:#000000;stroke-width:1.25454712;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <text
+         inkscape:transform-center-y="-29.431711"
+         transform="matrix(0.6654852,0.7464111,-0.7464111,0.6654852,765.43374,298.2237)"
+         inkscape:transform-center-x="24.555584"
+         id="text2383"
+         style="font-size:15px;font-style:normal;font-weight:bold;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Sans Bold"
+         xml:space="preserve"><textPath
+           id="textPath3171"
+           startOffset="50%"
+           xlink:href="#path2399"><tspan
+   id="tspan2385">Enter Code</tspan></textPath></text>
+    </g>
+    <g
+       id="g3466">
+      <path
+         id="path3244"
+         d="M 102.53125,964.75 L 102.65625,977.46875 L 86.71875,977.625 C 91.499948,984.69706 94.3125,993.20427 94.3125,1002.375 C 94.312503,1026.8328 74.45776,1046.6563 50,1046.6562 C 37.975314,1046.6563 27.049757,1041.8727 19.0625,1034.0938 L 25.1875,1027.5625 L -3.0625,1028.4688 L -2.15625,1056.75 L 5.1875,1048.9062 C 16.809102,1060.0961 32.606089,1067 50,1067 C 85.675905,1067 114.625,1038.0509 114.625,1002.375 C 114.625,988.338 110.13975,975.35747 102.53125,964.75 z"
+         style="fill:#999999;fill-opacity:1;stroke:#000000;stroke-width:1.25454712;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <text
+         inkscape:transform-center-y="32.219156"
+         transform="matrix(-0.7961282,-0.6051279,0.6051279,-0.7961282,-516.83894,1830.8886)"
+         inkscape:transform-center-x="-42.724017"
+         id="text2391"
+         style="font-size:15px;font-style:normal;font-weight:bold;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Sans Bold"
+         xml:space="preserve"><textPath
+           id="textPath3186"
+           startOffset="50%"
+           xlink:href="#path2399"><tspan
+   id="tspan2393">Run</tspan></textPath></text>
+    </g>
+    <path
+       sodipodi:type="arc"
+       style="fill:none;fill-opacity:1;stroke:none;stroke-width:1.00006604;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2399"
+       sodipodi:cx="431.33514"
+       sodipodi:cy="290.70715"
+       sodipodi:rx="90.913727"
+       sodipodi:ry="90.913727"
+       d="M 522.24887,290.70715 A 90.913727,90.913727 0 1 1 340.42142,290.70715 A 90.913727,90.913727 0 1 1 522.24887,290.70715 z"
+       transform="matrix(0.5469639,0,0,0.5469638,-185.92471,843.35588)" />
+  </g>
+</svg>

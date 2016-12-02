@@ -1,0 +1,5 @@
+digraph pdfloat {
+  "familiar syntax" -> "more libraries" [label = "more users  ", orientation=90];
+  "more libraries" -> "familiar syntax" [label = "  more users", orientation=270];
+}
+

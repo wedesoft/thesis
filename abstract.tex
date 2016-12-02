@@ -1,0 +1,12 @@
+Current machine vision systems (or at least their performance critical parts) are predominantly implemented using statically typed programming languages such as C, C++, or Java. Statically typed languages however are unsuitable for development and maintenance of large scale systems.
+
+When choosing a programming language, dynamically typed languages are usually not considered due to their lack of support for high-performance array operations. This thesis presents efficient implementations of machine vision algorithms with the (dynamically typed) Ruby programming language. The Ruby programming language was used, because it has the best support for meta-programming among the currently popular pro\-gram\-ming languages. Although the Ruby programming language was used, the approach presented in this thesis could be applied to any programming language which has equal or stronger support for meta-programming (e.g. Racket (former PLT Scheme)).
+
+A Ruby library for performing I/O and array operations was developed as part of this thesis. It is demonstrated how the library facilitates concise implementations of machine vision algorithms commonly used in industrial automation. I.e. this thesis is about a different way of implementing machine vision systems. The work could be applied to prototype and in some cases implement machine vision systems in industrial automation and robotics.
+
+The development of real-time machine vision software is facilitated as follows
+1. A JIT compiler is used to achieve real-time performance. It is demonstrated that the Ruby syntax is sufficient to integrate the JIT compiler transparently.
+2/ Various I/O devices are integrated for seamless acquisition, display, and storage of video and audio data.
+In combination these two developments preserve the expressiveness of the Ruby programming language while providing good run-time performance of the resulting implementation.
+
+To validate this approach, the performance of different operations is compared with the performance of equivalent C/C++ programs.

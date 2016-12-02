@@ -1,0 +1,7 @@
+all:
+	aclocal
+	automake -a --foreign
+	autoconf
+
+configure:
+	./configure

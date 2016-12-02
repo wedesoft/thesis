@@ -1,0 +1,5180 @@
+\subsection{multiarray.rb}\label{cha:multiarray-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+class Module
+  unless method_defined? :alias_method_chain
+    def alias_method_chain( target, feature, vocalize = target )
+      alias_method "#{vocalize}_without_#{feature}", target
+      alias_method target, "#{vocalize}_with_#{feature}"
+    end
+  end
+end
+class Proc
+  unless method_defined? :bind
+    def bind( object )
+      block, time = self, Time.now
+      ( class << object; self end ).class_eval do
+        method_name = "__bind_#{time.to_i}_#{time.usec}"
+        define_method method_name, &block
+        method = instance_method method_name
+        remove_method method_name
+        method
+      end.bind object
+    end
+  end
+  def while( &action )
+    action.call while call.get
+    nil
+  end
+end
+class Object
+  unless method_defined? :instance_exec
+    def instance_exec( *arguments, &block )
+      block.bind( self )[ *arguments ]
+    end
+  end
+  def not
+     false
+  end
+  def and( other )
+    unless other.is_a? Hornetseye::Node
+      other
+    else
+      x, y = other.coerce self
+      x.and y
+    end
+  end
+  def or( other )
+    unless other.is_a? Hornetseye::Node
+      self
+    else
+      x, y = other.coerce self
+      x.or y
+    end
+  end
+  def eq( other )
+    unless other.is_a? Hornetseye::Node
+      self == other
+    else
+      x, y = other.coerce self
+      x.eq y
+    end
+  end
+  def ne( other )
+    unless other.is_a? Hornetseye::Node
+      ( self == other ).not
+    else
+      x, y = other.coerce self
+      x.ne y
+    end
+  end
+  def conditional( a, b )
+    a.is_a?( Proc ) ? a.call : a
+  end
+  def if( &action )
+    action.call
+  end
+  def if_else( action1, action2 )
+    action1.call
+  end
+end
+class NilClass
+  def not
+     true
+  end
+  def and( other )
+    unless other.is_a? Hornetseye::Node
+      self
+    else
+      x, y = other.coerce self
+      x.and y
+    end
+  end
+  def or( other )
+    unless other.is_a? Hornetseye::Node
+      other
+    else
+      x, y = other.coerce self
+      x.or y
+    end
+  end
+  def conditional( a, b )
+    b.is_a?( Proc ) ? b.call : b
+  end
+  def if( &action )
+  end
+  def if_else( action1, action2 )
+    action2.call
+  end
+  def compilable?
+    false
+  end
+end
+class FalseClass
+  def not
+    true
+  end
+  def and( other )
+    unless other.is_a? Hornetseye::Node
+      self
+    else
+      x, y = other.coerce self
+      x.and y
+    end
+  end
+  def or( other )
+    unless other.is_a? Hornetseye::Node
+      other
+    else
+      x, y = other.coerce self
+      x.or y
+    end
+  end
+  def conditional( a, b )
+    b.is_a?( Proc ) ? b.call : b
+  end
+  def if( &action )
+  end
+  def if_else( action1, action2 )
+    action2.call
+  end
+end
+class Fixnum
+  def intand_with_hornetseye( other )
+    if other.is_a? Integer
+      intand_without_hornetseye other
+    else
+      x, y = other.coerce self
+      x & y
+    end
+  end
+  alias_method_chain :&, :hornetseye, :intand
+  def intor_with_hornetseye( other )
+    if other.is_a? Integer
+      intor_without_hornetseye other
+    else
+      x, y = other.coerce self
+      x | y
+    end
+  end
+  alias_method_chain :|, :hornetseye, :intor
+  def intxor_with_hornetseye( other )
+    if other.is_a? Integer
+      intxor_without_hornetseye other
+    else
+      x, y = other.coerce self
+      x ^ y
+    end
+  end
+  alias_method_chain :^, :hornetseye, :intxor
+  def shl_with_hornetseye( other )
+    if other.is_a? Integer
+      shl_without_hornetseye other
+    else
+      x, y = other.coerce self
+      x << y
+    end
+  end
+  alias_method_chain :<<, :hornetseye, :shl
+  def shr_with_hornetseye( other )
+    if other.is_a? Integer
+      shr_without_hornetseye other
+    else
+      x, y = other.coerce self
+      x >> y
+    end
+  end
+  alias_method_chain :>>, :hornetseye, :shr
+  if method_defined? :rpower
+    def power_with_hornetseye( other )
+      if other.is_a? Hornetseye::Node
+        x, y = other.coerce self
+        x ** y
+      else
+        power_without_hornetseye other
+      end
+    end
+    alias_method_chain :**, :hornetseye, :power
+  end
+  def lrand
+    Kernel.rand self
+  end
+  def drand
+    self * Kernel.rand
+  end
+end
+class Float
+  def drand
+    self * Kernel.rand
+  end
+end
+class Range
+  def min_with_hornetseye
+    if self.begin.is_a? Integer
+      self.begin
+    else
+      min_without_hornetseye
+    end
+  end
+  alias_method_chain :min, :hornetseye
+  def max_with_hornetseye
+    if self.end.is_a? Integer
+      exclude_end? ? self.end - 1 : self.end
+    else
+      max_without_hornetseye
+    end
+  end
+  alias_method_chain :max, :hornetseye
+  def size
+    max + 1 - min
+  end
+end
+class Numeric
+  def major( other )
+    if other.is_a? Numeric
+      ( self >= other ).conditional self, other
+    else
+      x, y = other.coerce self
+      x.major other
+    end
+  end
+  def minor( other )
+    if other.is_a? Numeric
+      ( self <= other ).conditional self, other
+    else
+      x, y = other.coerce self
+      x.minor other
+    end
+  end
+end
+class Array
+  class << self
+    def gauss_blur_filter( sigma, max_error = 1.0 / 0x100 )
+      def erf( x, sigma )
+        0.5 * Math.erf( x / ( Math.sqrt( 2.0 ) * sigma.abs ) )
+      end
+      raise 'Sigma must be greater than zero.' if sigma <= 0
+      integral = erf( +0.5, sigma ) - erf( -0.5, sigma )
+      retVal = [ integral ]
+      while 1.0 - integral > max_error
+        size2 = 0.5 * ( retVal.size + 2 )
+        nIntegral = erf( +size2, sigma ) - erf( -size2, sigma )
+        value = 0.5 * ( nIntegral - integral )
+        retVal.unshift( value )
+        retVal.push( value )
+        integral = nIntegral
+      end
+      retVal.collect { |element| element / integral }
+    end
+    def gauss_gradient_filter( sigma, max_error = 1.0 / 0x100 )
+      def gauss( x, sigma )
+        1.0 / ( Math.sqrt( 2.0 * Math::PI ) * sigma.abs ) *
+          Math.exp( -x**2 / ( 2.0 * sigma**2 ) )
+      end
+      raise 'Sigma must be greater than zero.' if sigma <= 0
+      retVal = [ gauss( +0.5, sigma ) - gauss( -0.5, sigma ) ]
+      integral = gauss( 0.5, sigma )
+      sumX = 0
+      while 2.0 * integral > max_error
+        size2 = 0.5 * ( retVal.size + 2 )
+        nIntegral = gauss( size2, sigma )
+        value = integral - nIntegral
+        retVal.unshift( -value )
+        retVal.push( +value )
+        sumX += value * ( retVal.size - 1 )
+        integral = nIntegral
+      end
+      retVal.collect { |element| element / sumX }
+    end
+  end
+  def collect_with_index( &action )
+    zip( ( 0 ... size ).to_a ).collect &action
+  end
+end
+begin
+  require 'continuation'
+rescue Exception
+end
+require 'complex'
+require 'malloc'
+require 'rbconfig'
+require 'set'
+require 'thread'
+require 'tmpdir'
+require 'multiarray/malloc'
+require 'multiarray/list'
+require 'multiarray/node'
+require 'multiarray/element'
+require 'multiarray/composite'
+require 'multiarray/store'
+require 'multiarray/random'
+require 'multiarray/object'
+require 'multiarray/index'
+require 'multiarray/bool'
+require 'multiarray/int'
+require 'multiarray/float'
+require 'multiarray/pointer'
+require 'multiarray/variable'
+require 'multiarray/lambda'
+require 'multiarray/lookup'
+require 'multiarray/elementwise'
+require 'multiarray/inject'
+require 'multiarray/diagonal'
+require 'multiarray/histogram'
+require 'multiarray/lut'
+require 'multiarray/integral'
+require 'multiarray/mask'
+require 'multiarray/unmask'
+require 'multiarray/components'
+require 'multiarray/operations'
+require 'multiarray/methods'
+require 'multiarray/rgb'
+require 'multiarray/complex'
+require 'multiarray/sequence'
+require 'multiarray/multiarray'
+require 'multiarray/shortcuts'
+require 'multiarray/gcctype'
+require 'multiarray/gccvalue'
+require 'multiarray/gcccontext'
+require 'multiarray/gcccache'
+require 'multiarray/gccfunction'
+module Hornetseye
+  def lazy( *shape, &action )
+    previous = Thread.current[ :lazy ]
+    Thread.current[ :lazy ] = true
+    begin
+      options = shape.last.is_a?( Hash ) ? shape.pop : {}
+      arity = options[ :arity ] || [ action.arity, shape.size ].max
+      if arity <= 0
+        action.call
+      else
+        index = Variable.new shape.empty? ? Hornetseye::INDEX( nil ) :
+                                            Hornetseye::INDEX( shape.pop )
+        term = lazy *( shape + [ :arity => arity - 1 ] ) do |*args|
+          action.call *( args + [ index ] )
+        end
+        term = Node.match( term ).new term unless term.is_a? Node
+        Lambda.new index, term
+      end
+    ensure
+      Thread.current[ :lazy ] = previous
+    end
+  end
+  module_function :lazy
+  def finalise( *shape, &action )
+    previous = Thread.current[ :lazy ]
+    Thread.current[ :lazy ] = false
+    begin
+      retval = lazy *shape, &action
+      retval.is_a?( Node ) ? retval.force : retval
+    ensure
+      Thread.current[ :lazy ] = previous
+    end
+  end
+  module_function :finalise
+  def sum( *shape, &action )
+    options = shape.last.is_a?( Hash ) ? shape.pop : {}
+    arity = options[ :arity ] || [ action.arity, shape.size ].max
+    if arity <= 0
+      term = action.call
+      term.is_a?( Node ) ? term.to_type( term.typecode.maxint ) : term
+    else
+      index = Variable.new shape.empty? ? Hornetseye::INDEX( nil ) :
+                           Hornetseye::INDEX( shape.pop )
+      term = sum *( shape + [ :arity => arity - 1 ] ) do |*args|
+        action.call *( args + [ index ] )
+      end
+      var1 = Variable.new term.typecode
+      var2 = Variable.new term.typecode
+      Inject.new( term, index, nil, var1 + var2, var1, var2 ).force
+    end
+  end
+  module_function :sum
+end
+\end{lstlisting}
+\subsection{multiarray/bool.rb}\label{cha:multiarray-bool-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class BOOL < Element
+    class << self
+      def inspect
+        'BOOL'
+      end
+      def descriptor( hash )
+        inspect
+      end
+      def fetch( ptr )
+        new ptr.load( self ).first.ne( 0 )
+      end
+      def memory_type
+        Malloc
+      end
+      def storage_size
+        1
+      end
+      def default
+        false
+      end
+      def directive
+        'c'
+      end
+    end
+    def write( ptr )
+      ptr.save UBYTE.new( get.conditional( 1, 0 ) )
+      self
+    end
+    module Match
+      def fit( *values )
+        if values.all? { |value| [ false, true ].member? value }
+          BOOL
+        else
+          super *values
+        end
+      end
+    end
+    Node.extend Match
+  end
+  def BOOL( value )
+    BOOL.new value
+  end
+  module_function :BOOL
+end
+\end{lstlisting}
+\subsection{multiarray/complex.rb}\label{cha:multiarray-complex-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class InternalComplex
+    class << self
+      def generic?( value )
+        value.is_a?( Numeric ) or value.is_a?( GCCValue )
+      end
+      def polar( r, theta )
+        new r * Math.cos( theta ), r * Math.sin( theta )
+      end
+    end
+    attr_accessor :real
+    attr_accessor :imag
+    def initialize( real, imag )
+      @real, @imag = real, imag
+    end
+    def inspect
+      "InternalComplex(#{@real.inspect},#{@imag.inspect})"
+    end
+    def to_s
+      "InternalComplex(#{@real.to_s},#{@imag.to_s})"
+    end
+    def assign( value )
+      @real, @imag = value.real, value.imag
+    end
+    def coerce( other )
+      if other.is_a? InternalComplex
+        return other, self
+      elsif other.is_a? Complex
+        return InternalComplex.new( other.real, other.imag ), self
+      else
+        return InternalComplex.new( other, 0 ), self
+      end
+    end
+    def conj
+      InternalComplex.new @real, -@imag
+    end
+    def abs
+      Math.hypot @real, @imag
+    end
+    def arg
+      Math.atan2 @imag, @real
+    end
+    def polar
+      return abs, arg
+    end
+    def +@
+      self
+    end
+    def -@
+      InternalComplex.new -@real, -@imag
+    end
+    def +( other )
+      if other.is_a?( InternalComplex ) or other.is_a?( Complex )
+        InternalComplex.new @real + other.real, @imag + other.imag
+      elsif InternalComplex.generic? other
+        InternalComplex.new @real + other, @imag
+      else
+        x, y = other.coerce self
+        x + y
+      end
+    end
+    def -( other )
+      if other.is_a?( InternalComplex ) or other.is_a?( Complex )
+        InternalComplex.new @real - other.real, @imag - other.imag
+      elsif InternalComplex.generic? other
+        InternalComplex.new @real - other, @imag
+      else
+        x, y = other.coerce self
+        x - y
+      end
+    end
+    def *( other )
+      if other.is_a?( InternalComplex ) or other.is_a?( Complex )
+        InternalComplex.new @real * other.real - @imag * other.imag,
+                    @real * other.imag + @imag * other.real
+      elsif InternalComplex.generic? other
+        InternalComplex.new @real * other, @imag * other
+      else
+        x, y = other.coerce self
+        x * y
+      end
+    end
+    def /( other )
+      if other.is_a?( InternalComplex ) or other.is_a?( Complex )
+        self * other.conj / other.abs2
+      elsif InternalComplex.generic? other
+        InternalComplex.new @real / other, @imag / other
+      else
+        x, y = other.coerce self
+        x / y
+      end
+    end
+    def **( other )
+      if other.is_a?( InternalComplex ) or other.is_a?( Complex )
+        r, theta = polar
+        ore = other.real
+        oim = other.imag
+        nr = Math.exp ore * Math.log( r ) - oim * theta
+        ntheta = theta * ore + oim * Math.log( r )
+        InternalComplex.polar nr, ntheta
+      elsif InternalComplex.generic? other
+        r, theta = polar
+        InternalComplex.polar r ** other, theta * other
+      else
+        x, y = other.coerce self
+        x ** y
+      end
+    end
+    def zero?
+      @real.zero?.and @imag.zero?
+    end
+    def nonzero?
+      @real.nonzero?.or @imag.nonzero?
+    end
+    def abs2
+      @real * @real + @imag * @imag
+    end
+    def ==( other )
+      if other.is_a?( InternalComplex ) or other.is_a?( Complex )
+        @real.eq( other.real ).and( @imag.eq( other.imag ) )
+      elsif InternalComplex.generic? other
+        @real.eq( other ).and( @imag.eq( 0 ) )
+      else
+        false
+      end
+    end
+    def decompose( i )
+      [ @real, @imag ][ i ]
+    end
+  end
+end
+module Math
+  def sqrt_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      real = sqrt( ( z.abs + z.real ) / 2 )
+      imag = ( z.imag < 0 ).conditional -sqrt( ( z.abs - z.real ) / 2 ),
+                                        sqrt( ( z.abs - z.real ) / 2 )
+      Hornetseye::InternalComplex.new real, imag
+    else
+      sqrt_without_internalcomplex z
+    end
+  end
+  alias_method_chain :sqrt, :internalcomplex
+  module_function :sqrt_without_internalcomplex
+  module_function :sqrt
+  def exp_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      real = exp( z.real ) * cos( z.imag )
+      imag = exp( z.real ) * sin( z.imag )
+      Hornetseye::InternalComplex.new real, imag
+    else
+      exp_without_internalcomplex z
+    end
+  end
+  alias_method_chain :exp, :internalcomplex
+  module_function :exp_without_internalcomplex
+  module_function :exp
+  def cos_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      real = cos( z.real ) * cosh( z.imag )
+      imag = -sin( z.real ) * sinh( z.imag )
+      Hornetseye::InternalComplex.new real, imag
+    else
+      cos_without_internalcomplex z
+    end
+  end
+  alias_method_chain :cos, :internalcomplex
+  module_function :cos_without_internalcomplex
+  module_function :cos
+  def sin_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      real = sin( z.real ) * cosh( z.imag )
+      imag = cos( z.real ) * sinh( z.imag )
+      Hornetseye::InternalComplex.new real, imag
+    else
+      sin_without_internalcomplex z
+    end
+  end
+  alias_method_chain :sin, :internalcomplex
+  module_function :sin_without_internalcomplex
+  module_function :sin
+  def tan_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      sin( z ) / cos( z )
+    else
+      tan_without_internalcomplex z
+    end
+  end
+  alias_method_chain :tan, :internalcomplex
+  module_function :tan_without_internalcomplex
+  module_function :tan
+  def cosh_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      real = cosh( z.real ) * cos( z.imag )
+      imag = sinh( z.real ) * sin( z.imag )
+      Hornetseye::InternalComplex.new real, imag
+    else
+      cosh_without_internalcomplex z
+    end
+  end
+  alias_method_chain :cosh, :internalcomplex
+  module_function :cosh_without_internalcomplex
+  module_function :cosh
+  def sinh_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      real = sinh( z.real ) * cos( z.imag )
+      imag = cosh( z.real ) * sin( z.imag )
+      Hornetseye::InternalComplex.new real, imag
+    else
+      sinh_without_internalcomplex z
+    end
+  end
+  alias_method_chain :sinh, :internalcomplex
+  module_function :sinh_without_internalcomplex
+  module_function :sinh
+  def tanh_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      sinh( z ) / cosh( z )
+    else
+      tanh_without_internalcomplex z
+    end
+  end
+  alias_method_chain :tanh, :internalcomplex
+  module_function :tanh_without_internalcomplex
+  module_function :tanh
+  def log_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      r, theta = z.polar
+      Hornetseye::InternalComplex.new log( r.abs ), theta
+    else
+      log_without_internalcomplex z
+    end
+  end
+  alias_method_chain :log, :internalcomplex
+  module_function :log_without_internalcomplex
+  module_function :log
+  def log10_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      log( z ) / log( 10 )
+    else
+      log10_without_internalcomplex z
+    end
+  end
+  alias_method_chain :log10, :internalcomplex
+  module_function :log10_without_internalcomplex
+  module_function :log10
+  def acos_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      -1.0.im * log( z + 1.0.im * sqrt( 1.0 - z * z ) )
+    else
+      acos_without_internalcomplex z
+    end
+  end
+  alias_method_chain :acos, :internalcomplex
+  module_function :acos_without_internalcomplex
+  module_function :acos
+  def asin_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      -1.0.im * log( 1.0.im * z + sqrt( 1.0 - z * z ) )
+    else
+      asin_without_internalcomplex z
+    end
+  end
+  alias_method_chain :asin, :internalcomplex
+  module_function :asin_without_internalcomplex
+  module_function :asin
+  def atan_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      1.0.im * log( ( 1.0.im + z ) / ( 1.0.im - z ) ) / 2.0
+    else
+      atan_without_internalcomplex z
+    end
+  end
+  alias_method_chain :atan, :internalcomplex
+  module_function :atan_without_internalcomplex
+  module_function :atan
+  def acosh_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      log( z + sqrt( z * z - 1.0 ) )
+    else
+      acosh_without_internalcomplex z
+    end
+  end
+  alias_method_chain :acosh, :internalcomplex
+  module_function :acosh_without_internalcomplex
+  module_function :acosh
+  def asinh_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      log( z + sqrt( 1.0 + z * z ) )
+    else
+      asinh_without_internalcomplex z
+    end
+  end
+  alias_method_chain :asinh, :internalcomplex
+  module_function :asinh_without_internalcomplex
+  module_function :asinh
+  def atanh_with_internalcomplex( z )
+    if z.is_a? Hornetseye::InternalComplex
+      log( ( 1.0 + z ) / ( 1.0 - z ) ) / 2.0
+    else
+      atanh_without_internalcomplex z
+    end
+  end
+  alias_method_chain :atanh, :internalcomplex
+  module_function :atanh_without_internalcomplex
+  module_function :atanh
+  def atan2_with_internalcomplex( y, x )
+    if [ x, y ].any? { |v| v.is_a? Hornetseye::InternalComplex }
+      -1.0.im * log( ( x + 1.0.im * y ) / sqrt( x * x + y * y ) )
+    else
+      atan2_without_internalcomplex y, x
+    end
+  end
+  alias_method_chain :atan2, :internalcomplex
+  module_function :atan2_without_internalcomplex
+  module_function :atan2
+end
+class Numeric
+  def conj
+    self
+  end
+end
+module Hornetseye
+  class COMPLEX_ < Composite
+    class << self
+      def inherited( subclass )
+        subclass.num_elements = 2
+      end
+      def construct( real, imag )
+        if Thread.current[ :function ]
+          new InternalComplex.new( real, imag )
+        else
+          new Complex( real, imag )
+        end
+      end
+      def default
+        if Thread.current[ :function ]
+          InternalComplex.new 0, 0
+        else
+          Complex 0, 0
+        end
+      end
+      IDENTIFIER = { SFLOAT => 'SCOMPLEX',
+                     DFLOAT => 'DCOMPLEX' }
+      def inspect
+        unless element_type.nil?
+          retval = IDENTIFIER[ element_type ] || "COMPLEX(#{element_type.inspect})"
+          ( class << self; self; end ).instance_eval do
+            define_method( :inspect ) { retval }
+          end
+          retval
+        else
+          super
+        end
+      end
+      def maxint
+        Hornetseye::COMPLEX element_type.maxint
+      end
+      def float
+        Hornetseye::COMPLEX element_type.float
+      end
+      def coercion( other )
+        if other < COMPLEX_
+          Hornetseye::COMPLEX element_type.coercion( other.element_type )
+        elsif other < INT_ or other < FLOAT_
+          Hornetseye::COMPLEX element_type.coercion( other )
+        else
+          super other
+        end
+      end
+      def coerce( other )
+        if other < COMPLEX_
+          return other, self
+        elsif other < INT_ or other < FLOAT_
+          return Hornetseye::COMPLEX( other ), self
+        else
+          super other
+        end        
+      end
+      def ==( other )
+        other.is_a? Class and other < COMPLEX_ and
+          element_type == other.element_type
+      end
+      def hash
+        [ :COMPLEX_, element_type ].hash
+      end
+      def eql?( other )
+        self == other
+      end
+    end
+    def initialize( value = self.class.default )
+      if Thread.current[ :function ].nil? or
+        [ value.real, value.imag ].all? { |c| c.is_a? GCCValue }
+        @value = value
+      else
+        real = GCCValue.new Thread.current[ :function ], value.real.to_s
+        imag = GCCValue.new Thread.current[ :function ], value.imag.to_s
+        @value = InternalComplex.new real, imag
+      end
+    end
+    def dup
+      if Thread.current[ :function ]
+        real = Thread.current[ :function ].variable self.class.element_type, 'v'
+        imag = Thread.current[ :function ].variable self.class.element_type, 'v'
+        real.assign @value.real
+        imag.assign @value.imag
+        self.class.new InternalComplex.new( real, imag )
+      else
+        self.class.new get
+      end
+    end
+    def assign( value )
+      value = value.simplify
+      if @value.real.respond_to? :assign
+        @value.real.assign value.get.real
+      else
+        @value.real = value.get.real
+      end
+      if @value.imag.respond_to? :assign
+        @value.imag.assign value.get.imag
+      else
+        @value.imag = value.get.imag
+      end
+      value
+    end
+    def values
+      [ @value.real, @value.imag ]
+    end
+    module Match
+      def fit( *values )
+        if values.all? { |value| value.is_a? InternalComplex or value.is_a? Complex or
+                                 value.is_a? Float or value.is_a? Integer }
+          if values.any? { |value| value.is_a? InternalComplex or value.is_a? Complex }
+            elements = values.inject( [] ) do |arr,value|
+              if value.is_a? InternalComplex or value.is_a? Complex
+                arr + [ value.real, value.imag ]
+              else
+                arr + [ value ]
+              end
+            end
+            element_fit = fit *elements
+            if element_fit == OBJECT
+              super *values
+            else
+              Hornetseye::COMPLEX element_fit
+            end
+          else
+            super *values
+          end
+        else
+          super *values
+        end
+      end
+      def align( context )
+        if self < COMPLEX_
+          Hornetseye::COMPLEX element_type.align( context )
+        else
+          super context
+        end
+      end
+    end
+    Node.extend Match
+  end
+  module Operations
+    define_unary_op :real, :scalar
+    define_unary_op :imag, :scalar
+    def real_with_decompose
+      if typecode == OBJECT or is_a?( Variable )
+        real_without_decompose
+      elsif typecode < COMPLEX_
+        decompose 0
+      else
+        self
+      end
+    end
+    alias_method_chain :real, :decompose
+    def real=( value )
+      if typecode < COMPLEX_
+        decompose( 0 )[] = value
+      elsif typecode == OBJECT
+        self[] = Hornetseye::lazy do
+          value + imag * Complex::I
+        end
+      else
+        self[] = value
+      end
+    end
+    def imag_with_decompose
+      if typecode == OBJECT or is_a?( Variable )
+        imag_without_decompose
+      elsif typecode < COMPLEX_
+        decompose 1
+      else
+        Hornetseye::lazy( *shape ) { typecode.new( 0 ) }
+      end
+    end
+    alias_method_chain :imag, :decompose
+    def imag=( value )
+      if typecode < COMPLEX_
+        decompose( 1 )[] = value
+      elsif typecode == OBJECT
+        self[] = Hornetseye::lazy do
+          real + value * Complex::I
+        end
+      else
+        raise "Cannot assign imaginary values to object of type #{array_type.inspect}"
+      end
+    end
+  end
+  def COMPLEX( element_type )
+    retval = Class.new COMPLEX_
+    retval.element_type = element_type
+    retval
+  end
+  module_function :COMPLEX
+  SCOMPLEX = COMPLEX SFLOAT
+  DCOMPLEX = COMPLEX DFLOAT
+  def SCOMPLEX( value )
+    SCOMPLEX.new value
+  end
+  def DCOMPLEX( value )
+    DCOMPLEX.new value
+  end
+  module_function :SCOMPLEX
+  module_function :DCOMPLEX
+end
+\end{lstlisting}
+\subsection{multiarray/components.rb}\label{cha:multiarray-components-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Components < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( dest, source, default, zero, labels, rank, n )
+      @dest, @source, @default, @zero, @labels, @rank, @n =
+        dest, source, default, zero, labels, rank, n
+    end
+    def descriptor( hash )
+      "Components(#{@dest.descriptor( hash )},#{@source.descriptor( hash )}," +
+        "#{@default.descriptor( hash )},#{@zero.descriptor( hash )}," +
+        "#{@labels.descriptor( hash )},#{@rank.descriptor( hash )}," +
+        "#{@n.descriptor( hash )})"
+    end
+    def array_type
+      retval = @dest.array_type
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      knot [], []
+      @dest
+    end
+    def knot( args, comp )
+      n = @n.simplify
+      if dimension > 0
+        subargs1, subargs2, subargs3 = [], [], []
+        subcomp1, subcomp2, subcomp3 = [], [], []
+        args.each do |arg|
+          subargs1.push proc { |i| arg.element( i - 1 ).demand }
+          subargs2.push proc { |i| arg.element( i     ).demand }
+          subargs3.push proc { |i| arg.element( i + 1 ).demand }
+        end
+        comp.each do |c|
+          subcomp1.push proc { |i| c.element( i - 1 ) }
+          subcomp2.push proc { |i| c.element( i     ) }
+          subcomp3.push proc { |i| c.element( i + 1 ) }
+        end
+        self.class.new( @dest.element( INT.new( 0 ) ),
+                        @source.element( INT.new( 0 ) ).demand, @default, @zero,
+                        @labels, @rank, n ).
+          knot( ( subargs2 + subargs3 ).collect { |p| p.call INT.new( 0 ) },
+                ( subcomp2 + subcomp3 ).collect { |p| p.call INT.new( 0 ) } )
+        INT.new( 1 ).upto INT.new( @source.shape.last ) - 2 do |i|
+          self.class.new( @dest.element( INT.new( i ) ),
+                          @source.element( INT.new( i ) ).demand, @default, @zero,
+                          @labels, @rank, n ).
+            knot( ( subargs1 + subargs2 + subargs3 ).collect { |p| p.call INT.new( i ) } +
+                  [ @source.element( INT.new( i ) - 1 ) ],
+                  ( subcomp1 + subcomp2 + subcomp3 ).collect { |p| p.call INT.new( i ) } +
+                  [ @dest.element( INT.new( i ) - 1 ) ] )
+        end
+        i = @source.shape.last - 1
+        self.class.new( @dest.element( INT.new( i ) ),
+                        @source.element( INT.new( i ) ).demand, @default, @zero,
+                        @labels, @rank, n ).
+          knot( ( subargs1 + subargs2 ).collect { |p| p.call INT.new( i ) } +
+                [ @source.element( INT.new( i ) - 1 ) ],
+                ( subcomp1 + subcomp2 ).collect { |p| p.call INT.new( i ) } +
+                [ @dest.element( INT.new( i ) - 1 ) ] )
+      else
+        @source.ne( @default ).if_else( proc do
+          label = @zero.simplify
+          args.zip( comp ).each do |arg,other|
+            @source.eq( arg ).if do
+              other = other.simplify
+              proc { other.ne( @labels.element( other ).demand ) }.while do
+                other.assign @labels.element( other ).demand
+              end
+              label.eq( @zero ).if_else( proc do
+                label.assign other
+              end, proc do
+                label.ne( other ).if do
+                  ( @rank.element( label ).demand <= @rank.element( other ).demand ).if_else( proc do
+                    @labels[ other ] = label
+                    @rank.element( label ).demand.eq( @rank.element( other ).demand ).if do
+                      @rank[ label ] = @rank.element( other ).demand + 1
+                    end
+                  end, proc do
+                    @labels[ label ] = other
+                    label.assign other
+                  end )
+                end
+              end )
+            end
+          end
+          label.eq( @zero ).if do
+            n.assign n + 1
+            @labels[ n ] = n
+            @rank[ n ] = 0
+            label.assign n
+          end
+          @dest.store label
+        end, proc do
+          @dest.store INT.new( 0 )
+        end )
+      end
+      if @n.is_a? Pointer_
+        INT.new( 0 ).upto n do |i|
+          l = UINT.new( i ).simplify
+          proc { l.ne( @labels.element( l ).demand ) }.while do
+            l.assign @labels.element( l ).demand
+          end
+          @labels[ INT.new( i ) ] = l
+        end
+        @n.store n
+      else
+        @n.assign n
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @source.subst( hash ), @default.subst( hash ),
+        @zero.subst( hash ), @labels.subst( hash ), @rank.subst( hash ), @n.subst( hash )
+    end
+    def variables
+      @dest.variables + @source.variables + @default.variables + @zero.variables +
+        @labels.variables + @rank.variables + @n.variables
+    end
+    def strip
+      stripped = [ @dest, @source, @default, @zero, @labels, @rank, @n ].
+        collect { |value| value.strip }
+      return stripped.inject( [] ) { |vars,elem| vars + elem[ 0 ] },
+        stripped.inject( [] ) { |values,elem| values + elem[ 1 ] },
+        self.class.new( *stripped.collect { |elem| elem[ 2 ] } )
+    end
+    def compilable?
+      [ @dest, @source, @default, @zero, @labels, @rank, @n ].all? do |value|
+        value.compilable?
+      end
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/composite.rb}\label{cha:multiarray-composite-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Composite < Element
+    class << self
+      attr_accessor :element_type
+      attr_accessor :num_elements
+      def memory_type
+        element_type.memory_type
+      end
+      def storage_size
+        element_type.storage_size * num_elements
+      end
+      def directive
+        element_type.directive * num_elements
+      end
+      def descriptor( hash )
+        unless element_type.nil?
+          inspect
+        else
+          super
+        end
+      end
+      def basetype
+        element_type
+      end
+      def typecodes
+        [ element_type ] * num_elements
+      end
+      def scalar
+        element_type
+      end
+    end
+    def decompose( i )
+      self.class.element_type.new @value.decompose( i )
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/diagonal.rb}\label{cha:multiarray-diagonal-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Diagonal < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( value, index0, index1, index2, initial, block, var1,
+                    var2 )
+      @value, @index0, @index1, @index2, @initial, @block, @var1, @var2 =
+        value, index0, index1, index2, initial, block, var1, var2
+    end
+    def descriptor( hash )
+      hash = hash.merge @index1 => ( ( hash.values.max || 0 ) + 1 )
+      hash = hash.merge @index2 => ( ( hash.values.max || 0 ) + 1 )
+      hash = hash.merge @var1 => ( ( hash.values.max || 0 ) + 1 )
+      hash = hash.merge @var2 => ( ( hash.values.max || 0 ) + 1 )
+      "Diagonal(#{@value.descriptor( hash )},#{@index0.descriptor( hash )}," +
+        "#{@index1.descriptor( hash )},#{@index2.descriptor( hash )}," +
+        "#{@initial ? @initial.descriptor( hash ) : 'nil'}," +
+        "#{@block.descriptor( hash )})"
+    end
+    def array_type
+      retval = Hornetseye::MultiArray @block.typecode, *@value.shape
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      s1 = @index2.size / 2
+      j0 = INT.new( 0 ).major( @index0 + s1 + 1 - @index1.size )
+      if @initial
+        retval = @initial.simplify
+      else
+        j = j0.get
+        i = @index0.get + s1.get - j
+        retval = @value.subst( @index1 => INT.new( i ),
+                               @index2 => INT.new( j ) ).simplify
+        j0 = ( j0 + 1 ).simplify
+      end
+      j0.upto( ( @index2.size - 1 ).minor( @index0 + s1 ) ) do |j|
+        i = @index0.get + s1.get - j
+        sub = @value.subst @index1 => INT.new( i ), @index2 => INT.new( j )
+        retval.assign @block.subst( @var1 => retval, @var2 => sub )
+      end
+      retval
+    end
+    def element( i )
+      Diagonal.new @value.element( i ), @index0, @index1, @index2, @initial,
+        @block, @var1, @var2
+    end
+    def variables
+      initial_variables = @initial ? @initial.variables : Set[]
+      @value.variables + initial_variables + @index0.variables - 
+        ( @index1.variables + @index2.variables )
+    end
+    def strip
+      meta_vars1, meta_values1, var1 = @index1.strip
+      meta_vars2, meta_values2, var2 = @index2.strip
+      vars1, values1, term1 =
+        @value.subst( @index1 => var1, @index2 => var2 ).strip
+      if @initial
+        vars2, values2, term2 = @initial.strip
+      else
+        vars2, values2, term2 = [], [], nil
+      end
+      vars3, values3, term3 = @block.strip
+      return vars1 + meta_vars1 + meta_vars2 + vars2 + vars3,
+        values1 + meta_values1 + meta_values2 + values2 + values3,
+        Diagonal.new( term1, @index0, var1, var2, term2, term3, @var1, @var2 )
+    end
+    def subst( hash )
+      subst_var0 = @index0.subst hash
+      subst_var1 = @index1.subst hash
+      subst_var2 = @index2.subst hash
+      value = @value.subst( @index0 => subst_var0, @index1 => subst_var1,
+                            @index2 => subst_var2 ).subst hash
+      initial = @initial ? @initial.subst( hash ) : nil
+      block = @block.subst hash
+      Diagonal.new value, subst_var0, subst_var1, subst_var2, initial,
+        block, @var1, @var2
+    end
+    def compilable?
+      initial_compilable = @initial ? @initial.compilable? : true
+      @value.compilable? and initial_compilable and @block.compilable?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/element.rb}\label{cha:multiarray-element-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Element < Node
+    class << self
+      def fetch( ptr )
+        construct *ptr.load( self )
+      end
+      def construct( *args )
+        new *args
+      end
+      def coercion( other )
+        if self == other
+          self
+        else
+          x, y = other.coerce self
+          x.coercion y
+        end
+      end
+    end
+    def initialize( value = self.class.default )
+      if Thread.current[ :function ].nil?
+        @value = value
+      else
+        @value = GCCValue.new Thread.current[ :function ], value.to_s
+      end
+    end
+    def descriptor( hash )
+      "#{self.class.to_s}(#{@value.to_s})"
+    end
+    def dup
+      if Thread.current[ :function ]
+        value = Thread.current[ :function ].variable self.class, 'v'
+        value.assign get
+        self.class.new value
+      else
+        self.class.new get
+      end
+    end
+    def strip
+      variable = Variable.new self.class
+      return [ variable ], [ self ], variable
+    end
+    def compilable?
+      if @value.respond_to? :compilable?
+        @value.compilable?
+      else
+        super
+      end
+    end
+    def skip( index, start )
+      self
+    end
+    def get
+      @value
+    end
+    def assign( value )
+      if @value.respond_to? :assign
+        @value.assign value.simplify.get
+      else
+        @value = value.simplify.get
+      end
+      value
+    end
+    def write( ptr )
+      ptr.save self
+    end
+    def values
+      [ @value ]
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/elementwise.rb}\label{cha:multiarray-elementwise-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class ElementWise_ < Node
+    class << self
+      attr_accessor :operation
+      attr_accessor :key
+      attr_accessor :conversion
+      def inspect
+        key.to_s
+      end
+      def descriptor( hash )
+        inspect
+      end
+      def finalised?
+        false
+      end
+    end
+    def initialize( *values )
+      @values = values
+      check_shape *values
+    end
+    def descriptor( hash )
+      "#{self.class.descriptor( hash )}" +
+        "(#{@values.collect { |value| value.descriptor( hash ) }.join ','})"
+    end
+    def array_type
+      array_types = @values.collect { |value| value.array_type }
+      retval = self.class.conversion.call *array_types
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      self.class.operation.call *@values
+    end
+    def subst( hash )
+      self.class.new *@values.collect { |value| value.subst( hash ) }
+    end
+    def variables
+      @values.inject( Set[] ) { |vars,value| vars + value.variables }
+    end
+    def strip
+      stripped = @values.collect { |value| value.strip }
+      return stripped.inject( [] ) { |vars,elem| vars + elem[ 0 ] },
+           stripped.inject( [] ) { |values,elem| values + elem[ 1 ] },
+           self.class.new( *stripped.collect { |elem| elem[ 2 ] } )
+    end
+    def skip( index, start )
+      skipped = *@values.collect { |value| value.skip( index, start ) }
+      self.class.new( *skipped ).demand
+    end
+    def element( i )
+      values = @values.collect do |value|
+        value.dimension == 0 ? value : value.element( i )
+      end
+      self.class.new( *values ).demand
+    end
+    def slice( start, length )
+      values = @values.collect do |value|
+        value.dimension == 0 ? value : value.slice( start, length )
+      end
+      self.class.new( *values ).demand
+    end
+    def decompose( i )
+      values = @values.collect { |value| value.decompose i }
+      self.class.new( *values ).demand
+    end
+    def compilable?
+      array_type.compilable? and @values.all? { |value| value.compilable? }
+    end
+  end
+  def ElementWise( operation, key, conversion = lambda { |t| t.send :identity } )
+    retval = Class.new ElementWise_
+    retval.operation = operation
+    retval.key = key
+    retval.conversion = conversion
+    retval
+  end
+  module_function :ElementWise
+end
+\end{lstlisting}
+\subsection{multiarray/float.rb}\label{cha:multiarray-float-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class FLOAT_ < Element
+    class << self
+      attr_accessor :double
+      def memory_type
+        Malloc
+      end
+      def storage_size
+        double ? 8 : 4
+      end
+      def default
+        0.0
+      end
+      def coercion( other )
+        if other < FLOAT_
+          Hornetseye::FLOAT( ( double or other.double ) )
+        elsif other < INT_
+          self
+        else
+          super other
+        end
+      end
+      def coerce( other )
+        if other < FLOAT_
+          return other, self
+        elsif other < INT_
+          return self, self
+        else
+          super other
+        end
+      end
+      def float
+        self
+      end
+      def directive
+        double ? 'd' : 'f'
+      end
+      def inspect
+        retval = "#{ double ? 'D' : 'S' }FLOAT"
+        ( class << self; self; end ).instance_eval do
+          define_method( :inspect ) { retval }
+        end
+        retval
+      end
+      def descriptor( hash )
+        inspect
+      end
+      def ==( other )
+        other.is_a? Class and other < FLOAT_ and double == other.double
+      end
+      def hash
+        [ :FLOAT_, double ].hash
+      end
+      def eql?( other )
+        self == other
+      end
+    end
+    module Match
+      def fit( *values )
+        if values.all? { |value| value.is_a? Float or value.is_a? Integer }
+          if values.any? { |value| value.is_a? Float }
+            DFLOAT
+          else
+            super *values
+          end
+        else
+          super *values
+        end
+      end
+      def align( context )
+        if self < FLOAT_ and context < FLOAT_
+          context
+        else
+          super context
+        end
+      end
+    end
+    Node.extend Match
+  end
+  SINGLE = false
+  DOUBLE = true
+  def FLOAT( double )
+    retval = Class.new FLOAT_
+    retval.double = double
+    retval
+  end
+  module_function :FLOAT
+  SFLOAT = FLOAT SINGLE
+  DFLOAT = FLOAT DOUBLE
+  def SFLOAT( value )
+    SFLOAT.new value
+  end
+  module_function :SFLOAT
+  def DFLOAT( value )
+    DFLOAT.new value
+  end
+  module_function :DFLOAT
+end
+\end{lstlisting}
+\subsection{multiarray/gcccache.rb}\label{cha:multiarray-gcccache-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class GCCCache
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/gcccontext.rb}\label{cha:multiarray-gcccontext-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class GCCContext
+    CFG = RbConfig::CONFIG
+    if CFG[ 'rubyhdrdir' ]
+      CFLAGS = "-DNDEBUG #{CFG[ 'CFLAGS' ]} " +
+        "-I#{CFG['rubyhdrdir']} -I#{CFG['rubyhdrdir']}/#{CFG['arch']}"
+    else
+      CFLAGS = "-DNDEBUG #{CFG[ 'CFLAGS' ]} " +
+        "-I#{CFG['archdir']}"
+    end
+    LIBRUBYARG = "-L#{CFG[ 'libdir' ]} #{CFG[ 'LIBRUBYARG' ]} #{CFG[ 'LDFLAGS' ]} "
+                 "#{CFG[ 'SOLIBS' ]} #{CFG[ 'DLDLIBS' ]}"
+    LDSHARED = CFG[ 'LDSHARED' ]
+    DLEXT = CFG[ 'DLEXT' ]
+    DIRNAME = "#{Dir.tmpdir}/hornetseye-ruby#{RUBY_VERSION}-" +
+              "#{ENV[ 'USER' ] || ENV[ 'USERNAME' ]}"
+    LOCKFILE = "#{DIRNAME}/lock"
+    Dir.mkdir DIRNAME, 0700 unless File.exist? DIRNAME
+    @@lock = File.new LOCKFILE, 'w', 0600
+    unless @@lock.flock File::LOCK_EX | File::LOCK_NB
+      raise "Could not lock file \"#{LOCKFILE}\""
+    end
+    @@lib_name = 'hornetseye_aaaaaaaa'
+    if ENV[ 'HORNETSEYE_PRELOAD_CACHE' ]
+      while File.exist? "#{DIRNAME}/#{@@lib_name}.#{DLEXT}"
+        require "#{DIRNAME}/#{@@lib_name}"        
+        @@lib_name = @@lib_name.succ
+      end
+    end
+    class << self
+      def build( &action )
+        lib_name, @@lib_name = @@lib_name, @@lib_name.succ
+        new( lib_name ).build &action
+      end
+    end
+    def initialize( lib_name )
+      @lib_name = lib_name
+      @instructions = ''
+      @wrappers = ''
+      @registrations = ''
+    end
+    def build( &action )
+      action.call self
+    end
+    def function( descriptor, *param_types )
+      @instructions << <<EOS
+struct Arguments
+{
+param_types.collect do |t|
+  t.identifiers
+end.flatten.collect_with_index do |ident,i|
+  "  #{ident} param#{i};"
+end.join( "\n" )
+}
+};
+VALUE #{descriptor}( void *args )
+{
+param_types.collect do |t|
+  t.identifiers
+end.flatten.collect_with_index do |ident,i|
+  "  #{ident} param#{i} = ((struct Arguments *)args)->param#{i};"
+end.join( "\n" )
+}
+EOS
+      @wrappers << <<EOS
+VALUE wrap#{descriptor.capitalize}( int argc, VALUE *argv, VALUE rbSelf )
+{
+  struct Arguments args;
+param_types.collect do |t|
+  t.r2c
+end.flatten.collect_with_index do |conv,i|
+  "  args.param#{i} = #{conv.call "argv[ #{i} ]"};"
+end.join( "\n" )
+}
+if RUBY_VERSION < '1.9.0'
+  "  #{descriptor}( &args );"
+else
+  "  rb_thread_blocking_region( &#{descriptor}, &args, RUBY_UBF_PROCESS, NULL );"
+end
+}
+  return Qnil;
+}
+EOS
+      @registrations << <<EOS
+  rb_define_singleton_method( cGCCCache, "#{descriptor}",
+                    RUBY_METHOD_FUNC( wrap#{descriptor.capitalize} ), -1 ); 
+EOS
+    end
+    def compile
+      template = <<EOS
+inline void *mallocToPtr( VALUE rbMalloc )
+{
+  void *retVal; Data_Get_Struct( rbMalloc, void, retVal );
+  return retVal;
+}
+static unsigned long make_mask( unsigned long x )
+{
+  x = x | x >> 1;
+  x = x | x >> 2;
+  x = x | x >> 4;
+  x = x | x >> 8;
+  x = x | x >> 16;
+  x = x | x >> 32;
+  return x;
+}
+static unsigned long limited_rand( unsigned long limit )
+{
+  int i;
+  unsigned long mask, val;
+  if ( limit < 2 ) return 0;
+  mask = make_mask( limit - 1 );
+  retry:
+  val = 0;
+  for ( i = SIZEOF_LONG / 4 - 1; 0 <= i; i-- ) {
+    if ( ( mask >> ( i * 32 ) ) & 0xffffffff ) {
+      val |= (unsigned long)rb_genrand_int32() << ( i * 32 );
+      val &= mask;
+      if ( limit <= val )
+        goto retry;
+    };
+  };
+  return val;
+}
+void Init_#{@lib_name}(void)
+{
+  VALUE mHornetseye = rb_define_module( "Hornetseye" );
+  VALUE cGCCCache = rb_define_class_under( mHornetseye, "GCCCache",
+                                           rb_cObject );
+}
+EOS
+      File.open "#{DIRNAME}/#{@lib_name}.c", 'w', 0600 do |f|
+        f << template
+      end
+      gcc = "#{LDSHARED} #{CFLAGS} -o #{DIRNAME}/#{@lib_name}.#{DLEXT} " +
+            "#{DIRNAME}/#{@lib_name}.c #{LIBRUBYARG}"
+      raise "The following command failed: #{gcc}" unless system gcc
+      require "#{DIRNAME}/#{@lib_name}"
+    end
+    def <<( str )
+      @instructions << str
+      self
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/gccfunction.rb}\label{cha:multiarray-gccfunction-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class GCCFunction
+    class << self
+      def run( block )
+        keys, values, term = block.strip
+        labels = Hash[ *keys.zip( ( 0 ... keys.size ).to_a ).flatten ]
+        method_name = ( '_' + term.descriptor( labels ) ).
+                            tr( '(),+\-*/%.@?~&|^<=>',
+                                '0123\456789ABCDEFGH' )
+        compile method_name, term, *keys
+        args = values.collect { |arg| arg.values }.flatten
+        GCCCache.send method_name, *args
+      end
+      def compile( method_name, term, *keys )
+        unless GCCCache.respond_to? method_name
+          GCCContext.build do |context|
+            function = GCCFunction.new context, method_name,
+                                       *keys.collect { |var| var.meta }
+            Thread.current[ :function ] = function
+            term_subst = Hash[ *keys.zip( function.params ).flatten ]
+            Hornetseye::lazy do
+              term.subst( term_subst ).demand
+            end
+            Thread.current[ :function ] = nil
+            function.insn_return
+            function.compile
+          end
+        end
+      end
+    end
+    def initialize( context, method_name, *param_types )
+      context.function method_name, *param_types.collect { |t| GCCType.new t }
+      @context = context
+      @method_name = method_name
+      @param_types = param_types
+      @indent = 1
+      @ids = 0
+    end
+    def compile
+      self << '}'
+      @context.compile
+      self
+    end
+    def id( prefix )
+      @ids += 1
+      "%s%02d"% [ prefix, @ids ]
+    end
+    def variable( typecode, prefix )
+      retval = GCCValue.new( self, id( prefix ) )
+      self << "#{indent}#{GCCType.new( typecode ).identifier} #{retval};\n"
+      retval
+    end
+    def indent
+      '  ' * @indent
+    end
+    def indent_offset( offset )
+      @indent += offset
+    end
+    def params
+      idx = 0
+      @param_types.collect do |param_type|
+        args = GCCType.new( param_type ).identifiers.collect do
+          arg = GCCValue.new self, "param#{idx}"
+          idx += 1
+          arg
+        end
+        param_type.construct *args
+      end
+    end
+    def call( *args )
+      @context.send @method_name, *args.collect { |v| v.get }
+    end
+    def insn_return( value = nil )
+      self << "#{indent}return#{ value ? ' ' + value.get.to_s : '' };\n"
+    end
+    def <<( str )
+      @context << str
+      self
+    end
+  end
+end
+class Proc
+  def while_with_gcc( &action )
+    function = Thread.current[ :function ]
+    if function
+      function << "#{function.indent}while ( 1 ) {\n"
+      function.indent_offset +1
+      function << "#{function.indent}if ( !( #{call.get}) ) break;\n"
+      action.call
+      function.indent_offset -1
+      function << "#{function.indent}}\n"
+      nil
+    else
+      while_without_gcc &action
+    end
+  end
+  alias_method_chain :while, :gcc
+end
+\end{lstlisting}
+\subsection{multiarray/gcctype.rb}\label{cha:multiarray-gcctype-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class GCCType
+    def initialize( typecode )
+      @typecode = typecode
+    end
+    def identifier
+      case @typecode
+      when nil
+        'void'
+      when BOOL
+        'char'
+      when BYTE
+        'char'
+      when UBYTE
+        'unsigned char'
+      when SINT
+        'short int'
+      when USINT
+        'unsigned short int'
+      when INT
+        'int'
+      when UINT
+        'unsigned int'
+      when SFLOAT
+        'float'
+      when DFLOAT
+        'double'
+      else
+        if @typecode < Pointer_
+          'unsigned char *'
+        elsif @typecode < INDEX_
+          'int'
+        else
+          raise "No identifier available for #{@typecode.inspect}"
+        end
+      end
+    end
+    def identifiers
+      if @typecode < Composite
+        GCCType.new( @typecode.element_type ).identifiers * @typecode.num_elements
+      else
+        [ GCCType.new( @typecode ).identifier ]
+      end
+    end
+    def r2c
+      case @typecode
+      when BOOL
+        [ lambda { |expr| "( #{expr} ) != Qfalse" } ]
+      when BYTE, UBYTE, SINT, USINT, INT, UINT
+        [ lambda { |expr| "NUM2INT( #{expr} )" } ]
+      when SFLOAT, DFLOAT
+        [ lambda { |expr| "NUM2DBL( #{expr} )" } ]
+      else
+        if @typecode < Pointer_
+          [ lambda { |expr| "(#{identifier})mallocToPtr( #{expr} )" } ]
+        elsif @typecode < Composite
+          GCCType.new( @typecode.element_type ).r2c * @typecode.num_elements
+        else
+          raise "No conversion available for #{@typecode.inspect}"
+        end
+      end
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/gccvalue.rb}\label{cha:multiarray-gccvalue-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class GCCValue
+    class << self
+      def generic?( value )
+        value.is_a?( GCCValue ) or value.is_a?( Fixnum ) or
+          value.is_a?( Float )
+      end
+      def define_unary_op( op, opcode = op )
+        define_method( op ) do
+          GCCValue.new @function, "#{opcode}( #{self} )"
+        end
+      end
+      def define_unary_method( mod, op, opcode = op )
+        mod.module_eval do
+          define_method( "#{op}_with_gcc" ) do |a|
+            if a.is_a? GCCValue
+              GCCValue.new a.function, "#{opcode}( #{a} )"
+            else
+              send "#{op}_without_gcc", a
+            end
+          end
+          alias_method_chain op, :gcc
+          module_function "#{op}_without_gcc"
+          module_function op
+        end
+      end
+      def define_binary_op( op, opcode = op )
+        define_method( op ) do |other|
+          if GCCValue.generic? other
+            GCCValue.new @function, "( #{self} ) #{opcode} ( #{other} )"
+          else
+            x, y = other.coerce self
+            x.send op, y
+          end
+        end
+      end
+      def define_binary_method( mod, op, opcode = op )
+        mod.module_eval do
+          define_method( "#{op}_with_gcc" ) do |a,b|
+            if a.is_a? GCCValue or b.is_a? GCCValue
+              function = a.is_a?( GCCValue ) ? a.function : b.function
+              GCCValue.new function, "#{opcode}( #{a}, #{b} )"
+            else
+              send "#{op}_without_gcc", a, b
+            end
+          end
+          alias_method_chain op, :gcc
+          module_function "#{op}_without_gcc"
+          module_function op
+        end
+      end
+    end
+    attr_reader :function
+    def initialize( function, descriptor ) 
+      @function = function
+      @descriptor = descriptor
+    end
+    def inspect
+      @descriptor
+    end
+    def to_s
+      @descriptor
+    end
+    def assign( value )
+      @function << "#{@function.indent}#{self} = #{value};\n"
+      value
+    end
+    def compilable?
+      false
+    end
+    def load( typecode )
+      offset = 0
+      typecode.typecodes.collect do |t|
+        value = GCCValue.new @function,
+          "*(#{GCCType.new( t ).identifier} *)( #{self} + #{offset} )"
+        offset += t.storage_size
+        value
+      end
+    end
+    def save( value )
+      offset = 0
+      value.class.typecodes.zip( value.values ).each do |t,v|
+        @function << "#{@function.indent}*(#{GCCType.new( t ).identifier} *)( #{self} + #{offset} ) = #{v};\n"
+        offset += t.storage_size
+      end
+    end
+    def conj
+      self
+    end
+    def abs
+      ( self >= 0 ).conditional self, -self
+    end
+    def arg
+      ( self >= 0 ).conditional 0, Math::PI
+    end
+    def r
+      self
+    end
+    def g
+      self
+    end
+    def b
+      self
+    end
+    def real
+      self
+    end
+    def imag
+      0
+    end
+    def conditional( a, b )
+      if a.is_a?( Proc ) and b.is_a?( Proc )
+        conditional a.call, b.call
+      else
+        GCCValue.new @function, "( #{self} ) ? ( #{a} ) : ( #{b} )"
+      end
+    end
+    def conditional_with_rgb( a, b )
+      if a.is_a?( RGB ) or b.is_a?( RGB )
+        Hornetseye::RGB( conditional( a.r, b.r ), conditional( a.g, b.g ),
+                         conditional( a.b, b.b ) )
+      else
+        conditional_without_rgb a, b
+      end
+    end
+    alias_method_chain :conditional, :rgb
+    def conditional_with_complex( a, b )
+      if a.is_a?( InternalComplex ) or b.is_a?( InternalComplex )
+        InternalComplex.new conditional( a.real, b.real ),
+                            conditional( a.imag, b.imag )
+      else
+        conditional_without_complex a, b
+      end
+    end
+    alias_method_chain :conditional, :complex
+    def if( &action )
+      @function << "#{@function.indent}if ( #{self} ) {\n"
+      @function.indent_offset +1
+      action.call
+      @function.indent_offset -1
+      @function << "#{@function.indent}};\n"
+      self
+    end
+    def if_else( action1, action2 )
+      @function << "#{@function.indent}if ( #{self} ) {\n"
+      @function.indent_offset +1
+      action1.call
+      @function.indent_offset -1
+      @function << "#{@function.indent}} else {\n"
+      @function.indent_offset +1
+      action2.call
+      @function.indent_offset -1
+      @function << "#{@function.indent}};\n"
+      self
+    end
+    define_unary_op :not, '!'
+    define_unary_op :~
+    define_unary_op :-@, :-
+    define_binary_op :and, '&&'
+    define_binary_op :or, '||'
+    define_binary_op :&
+    define_binary_op :|
+    define_binary_op :^
+    define_binary_op :<<
+    define_binary_op :>>
+    define_binary_op :+
+    define_binary_op :-
+    define_binary_op :*
+    define_binary_op :/
+    define_binary_op :%
+    define_binary_op :eq, :==
+    define_binary_op :ne, '!='
+    define_binary_op :<
+    define_binary_op :<=
+    define_binary_op :>
+    define_binary_op :>=
+    define_unary_method Math, :sqrt
+    define_unary_method Math, :log
+    define_unary_method Math, :log10
+    define_unary_method Math, :exp
+    define_unary_method Math, :cos
+    define_unary_method Math, :sin
+    define_unary_method Math, :tan
+    define_unary_method Math, :acos
+    define_unary_method Math, :asin
+    define_unary_method Math, :atan
+    define_unary_method Math, :cosh
+    define_unary_method Math, :sinh
+    define_unary_method Math, :tanh
+    define_unary_method Math, :acosh
+    define_unary_method Math, :asinh
+    define_unary_method Math, :atanh
+    define_binary_method Math, :atan2
+    define_binary_method Math, :hypot
+    def zero?
+      GCCValue.new @function, "( #{self} ) == 0"
+    end
+    def nonzero?
+      GCCValue.new @function, "( #{self} ) != 0"
+    end
+    def floor
+      GCCValue.new @function, "floor( #{self} )"
+    end
+    def ceil
+      GCCValue.new @function, "ceil( #{self} )"
+    end
+    def round
+      GCCValue.new @function, "round( #{self} )"
+    end
+    def **( other )
+      if GCCValue.generic? other
+        GCCValue.new @function, "pow( #{self}, #{other} )"
+      else
+        x, y = other.coerce self
+        x ** y
+      end
+    end
+    def drand
+      GCCValue.new @function, "( rb_genrand_real() * ( #{self} ) )"
+    end
+    def lrand
+      GCCValue.new @function, "limited_rand( #{self} )"
+    end
+    def major( other )
+      GCCValue.new @function,
+        "( ( #{self} ) >= ( #{other} ) ) ? ( #{self} ) : ( #{other} )"
+    end
+    def minor( other )
+      GCCValue.new @function,
+        "( ( #{self} ) <= ( #{other} ) ) ? ( #{self} ) : ( #{other} )"
+    end
+    def times( &action )
+      i = @function.variable INT, 'i'
+      @function << "#{@function.indent}for ( #{i} = 0; " +
+                   "#{i} != #{self}; #{i}++ ) {\n"
+      @function.indent_offset +1
+      action.call i
+      @function.indent_offset -1
+      @function << "#{@function.indent}};\n"
+      self
+    end
+    def upto( other, &action )
+      i = @function.variable INT, 'i'
+      @function << "#{@function.indent}for ( #{i} = #{self}; " +
+                   "#{i} != #{ other + 1 }; #{i}++ ) {\n"
+      @function.indent_offset +1
+      action.call i
+      @function.indent_offset -1
+      @function << "#{@function.indent}};\n"
+      self
+    end
+    def coerce( other )
+      if other.is_a? GCCValue
+        return other, self
+      else
+        return GCCValue.new( @function, "( #{other} )" ), self
+      end
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/histogram.rb}\label{cha:multiarray-histogram-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Histogram < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( dest, weight, *sources )
+      @dest, @weight, @sources = dest, weight, sources
+    end
+    def descriptor( hash )
+      "Histogram(#{@dest.descriptor( hash )}," +
+        "#{@weight.descriptor( hash )}," +
+        "#{@sources.collect { |source| source.descriptor( hash ) }.join ','})"
+    end
+    def array_type
+      retval = @dest.array_type
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      if variables.empty?
+        if @sources.any? { |source| source.dimension > 0 }
+          source_type = @sources.
+            collect { |source| source.array_type }.inject { |a,b| a.coercion b }
+          source_type.shape.last.times do |i|
+            sources = @sources.collect do |source|
+              source.dimension > 0 ? source.element( INT.new( i ) ) : source
+            end
+            weight = @weight.dimension > 0 ? @weight.element( INT.new( i ) ) : @weight
+            Histogram.new( @dest, weight, *sources ).demand
+          end
+        else
+          dest = @dest
+          ( @dest.dimension - 1 ).downto( 0 ) do |i|
+            dest = dest.element @sources[ i ].demand
+          end
+          dest.store dest + @weight
+        end
+        @dest
+      else
+        super
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @weight.subst( hash ),
+                     *@sources.collect { |source| source.subst hash }
+    end
+    def variables
+      @sources.inject( @dest.variables + @weight.variables ) { |a,b| a + b.variables }
+    end
+    def strip
+      stripped = ( [ @dest, @weight ] + @sources ).collect { |source| source.strip }
+      return stripped.inject( [] ) { |vars,elem| vars + elem[ 0 ] },
+           stripped.inject( [] ) { |values,elem| values + elem[ 1 ] },
+           self.class.new( *stripped.collect { |elem| elem[ 2 ] } )
+    end
+    def compilable?
+      @dest.compilable? and @weight.compilable? and
+        @sources.all? { |source| source.compilable? }
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/index.rb}\label{cha:multiarray-index-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class INDEX_ < Element
+    class << self
+      attr_accessor :size
+      def inspect
+        "INDEX(#{size.inspect})"
+      end
+      def descriptor( hash )
+        "INDEX(#{size.descriptor( hash )})"
+      end
+      def array_type
+        INT
+      end
+      def strip
+        meta_vars, meta_values = size.strip
+        if meta_vars.empty?
+          return [], [], self
+        else
+          return meta_vars, meta_values, Hornetseye::INDEX( meta_vars.first )
+        end
+      end
+      def subst( hash )
+        Hornetseye::INDEX size.subst( hash )
+      end
+      def variables
+        size.variables
+      end
+    end
+    def initialize
+      raise "#{self.class.inspect} must not be instantiated"
+    end
+  end
+  def INDEX( size )
+    retval = Class.new INDEX_
+    size = INT.new( size ) unless size.is_a? Node
+    retval.size = size
+    retval
+  end
+  module_function :INDEX
+end
+\end{lstlisting}
+\subsection{multiarray/inject.rb}\label{cha:multiarray-inject-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Inject < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( value, index, initial, block, var1, var2 )
+      @value, @index, @initial, @block, @var1, @var2 =
+        value, index, initial, block, var1, var2
+    end
+    def descriptor( hash )
+      hash = hash.merge @index => ( ( hash.values.max || 0 ) + 1 )
+      hash = hash.merge @var1 => ( ( hash.values.max || 0 ) + 1 )
+      hash = hash.merge @var2 => ( ( hash.values.max || 0 ) + 1 )
+      "Inject(#{@value.descriptor( hash )}," +
+         "#{@initial ? @initial.descriptor( hash ) : 'nil'}," +
+         "#{@index.descriptor( hash )},#{@block.descriptor( hash )})"
+    end
+    def array_type
+      retval = @value.to_type( @block.typecode ).array_type
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      if @initial
+        retval = @initial.to_type( typecode ).simplify # !!!
+        offset = INT.new 0
+      else
+        retval = @value.subst( @index => INT.new( 0 ) ).simplify # !!!
+        offset = INT.new 1
+      end
+      offset.upto @index.size - 1 do |i|
+        sub = @value.subst @index => INT.new( i )
+        retval.assign @block.subst( @var1 => retval, @var2 => sub )
+      end
+      retval
+    end
+    def element( i )
+      self.class.new @value.element( i ), @index, @initial, @block, @var1, @var2
+    end
+    def variables
+      initial_variables = @initial ? @initial.variables : Set[]
+      ( @value.variables + initial_variables ) - @index.variables
+    end
+    def strip
+      meta_vars, meta_values, var = @index.strip
+      vars1, values1, term1 = @value.subst( @index => var ).strip
+      if @initial
+        vars2, values2, term2 = @initial.strip
+      else
+        vars2, values2 = [], [], nil
+      end
+      vars3, values3, term3 = @block.strip
+      return vars1 + vars2 + vars3 + meta_vars,
+        values1 + values2 + values3 + meta_values,
+        self.class.new( term1, var, term2, term3, @var1, @var2 )
+    end
+    def subst( hash )
+      subst_var = @index.subst hash
+      value = @value.subst( @index => subst_var ).subst hash
+      initial = @initial ? @initial.subst( hash ) : nil
+      block = @block.subst hash
+      self.class.new value, subst_var, initial, block, @var1, @var2
+    end
+    def compilable?
+      initial_compilable = @initial ? @initial.compilable? : true
+      @value.compilable? and initial_compilable and @block.compilable?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/int.rb}\label{cha:multiarray-int-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class INT_ < Element
+    class << self
+      attr_accessor :bits
+      attr_accessor :signed
+      def memory_type
+        Malloc
+      end
+      def storage_size
+        ( bits + 7 ).div 8
+      end
+      def default
+        0
+      end
+      def maxint
+        Hornetseye::INT [ 32, bits ].max, signed
+      end
+      def coercion( other )
+        if other < INT_
+          Hornetseye::INT [ bits, other.bits ].max, ( signed or other.signed )
+        else
+          super other
+        end
+      end
+      def coerce( other )
+        if other < INT_
+          return other, self
+        else
+          super other
+        end
+      end
+      DIRECTIVES = { [  8, true  ] => 'c',
+                     [  8, false ] => 'C',
+                     [ 16, true  ] => 's',
+                     [ 16, false ] => 'S',
+                     [ 32, true  ] => 'i',
+                     [ 32, false ] => 'I',
+                     [ 64, true  ] => 'q',
+                     [ 64, false ] => 'Q' }
+      def directive
+        retval = DIRECTIVES[ [ bits, signed ] ]
+        raise "No directive for packing/unpacking #{inspect}" unless retval
+        retval
+      end
+      IDENTIFIER = { [  8, true  ] => 'BYTE',
+                     [  8, false ] => 'UBYTE',
+                     [ 16, true  ] => 'SINT',
+                     [ 16, false ] => 'USINT',
+                     [ 32, true  ] => 'INT',
+                     [ 32, false ] => 'UINT',
+                     [ 64, true  ] => 'LONG',
+                     [ 64, false ] => 'ULONG' }
+      def inspect
+        unless bits.nil? or signed.nil?
+          retval = IDENTIFIER[ [ bits, signed ] ] ||
+                   "INT(#{bits.inspect},#{ signed ? 'SIGNED' : 'UNSIGNED' })"
+          ( class << self; self; end ).instance_eval do
+            define_method( :inspect ) { retval }
+          end
+          retval
+        else
+          super
+        end
+      end
+      def descriptor( hash )
+        unless bits.nil? or signed.nil?
+          inspect
+        else
+          super hash
+        end
+      end
+      def ==( other )
+        other.is_a? Class and other < INT_ and
+          bits == other.bits and signed == other.signed
+      end
+      def hash
+        [ :INT_, bits, signed ].hash
+      end
+      def eql?( other )
+        self == other
+      end
+    end
+    def times( &action )
+      get.times &action
+      self
+    end
+    def upto( other, &action )
+      get.upto other.get, &action
+      self
+    end
+    module Match
+      def fit( *values )
+        if values.all? { |value| value.is_a? Integer }
+          bits = 8
+          ubits = 8
+          signed = false
+          values.each do |value|
+            bits *= 2 until ( -2**(bits-1) ... 2**(bits-1) ).include? value
+            if value < 0
+              signed = true
+            else
+              ubits *= 2 until ( 0 ... 2**ubits ).include? value
+            end
+          end
+          bits = signed ? bits : ubits
+          if bits <= 64
+            Hornetseye::INT bits, signed
+          else
+            super *values
+          end
+        else
+          super *values
+        end
+      end
+    end
+    Node.extend Match
+  end
+  UNSIGNED = false
+  SIGNED   = true
+  def INT( arg, signed = nil )
+    if signed.nil?
+      INT.new arg
+    else
+      retval = Class.new INT_
+      retval.bits = arg
+      retval.signed = signed
+      retval
+    end
+  end
+  module_function :INT
+  BYTE  = INT  8, SIGNED
+  UBYTE = INT  8, UNSIGNED
+  SINT  = INT 16, SIGNED
+  USINT = INT 16, UNSIGNED
+  INT   = INT 32, SIGNED
+  UINT  = INT 32, UNSIGNED
+  LONG  = INT 64, SIGNED
+  ULONG = INT 64, UNSIGNED
+  def BYTE( value )
+    BYTE.new value
+  end
+  def UBYTE( value )
+    UBYTE.new value
+  end
+  def SINT( value )
+    SINT.new value
+  end
+  def USINT( value )
+    USINT.new value
+  end
+  def UINT( value )
+    UINT.new value
+  end
+  def LONG( value )
+    LONG.new value
+  end
+  def ULONG( value )
+    ULONG.new value
+  end
+  module_function :BYTE
+  module_function :UBYTE
+  module_function :SINT
+  module_function :USINT
+  module_function :UINT
+  module_function :LONG
+  module_function :ULONG
+end
+\end{lstlisting}
+\subsection{multiarray/integral.rb}\label{cha:multiarray-integral-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Integral < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( dest, source )
+      @dest, @source = dest, source
+    end
+    def descriptor( hash )
+      "Integral(#{@dest.descriptor( hash )},#{@source.descriptor( hash )})"
+    end
+    def array_type
+      retval = @dest.array_type
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      if variables.empty?
+        if @source.dimension > 0
+          self.class.new( @dest.element( INT.new( 0 ) ),
+                          @source.element( INT.new( 0 ) ) ).demand
+          INT.new( 1 ).upto INT.new( @source.shape.last ) - 1 do |i|
+            dest = @dest.element INT.new( i )
+            source = @source.element INT.new( i )
+            self.class.new( dest, source ).demand
+            Store.new( dest, dest + @dest.element( INT.new( i ) - 1 ) ).demand
+          end
+        else
+          Store.new( @dest, @source ).demand
+        end
+        @dest
+      else
+        super
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @source.subst( hash )
+    end
+    def variables
+      @dest.variables + @source.variables
+    end
+    def strip
+      vars1, values1, term1 = @dest.strip
+      vars2, values2, term2 = @source.strip
+      return vars1 + vars2, values1 + values2, self.class.new( term1, term2 )
+    end
+    def compilable?
+      @dest.compilable? and @source.compilable?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/lambda.rb}\label{cha:multiarray-lambda-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Lambda < Node
+    def initialize( index, term )
+      @index = index
+      @term = term
+    end
+    def memory
+      @term.memory
+    end
+    def strides
+      other = @term.strides
+      other ? other + [ stride( @index ) ] : nil
+    end
+    def stride( index )
+      @term.stride index
+    end
+    def descriptor( hash )
+      hash = hash.merge @index => ( ( hash.values.max || 0 ) + 1 )
+      "Lambda(#{@index.descriptor( hash )},#{@term.descriptor( hash )})"
+    end
+    def array_type
+      retval = Hornetseye::Sequence @term.array_type, @index.size.get
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def variables
+      @term.variables - @index.variables + @index.meta.variables
+    end
+    def strip
+      meta_vars, meta_values, var = @index.strip
+      vars, values, term = @term.subst( @index => var ).strip
+      return vars + meta_vars, values + meta_values, Lambda.new( var, term )
+    end
+    def subst( hash )
+      subst_var = @index.subst hash
+      Lambda.new subst_var, @term.subst( hash.merge( @index => subst_var ) )
+    end
+    def lookup( value, stride )
+      if value.is_a? Variable
+        Lookup.new self, value, stride
+      else
+        Lambda.new @index, @term.lookup( value, stride )
+      end
+    end
+    def skip( index, start )
+      Lambda.new @index, @term.skip( index, start )
+    end
+    def element( i )
+      unless i.is_a? Node
+        unless ( 0 ... shape.last ).member? i
+          raise "Index must be in 0 ... #{shape.last} (was #{i})"
+        end
+        i = INT.new i
+      end
+      i.size = @index.size if i.is_a?( Variable ) and @index.size.get
+      @term.subst @index => i
+    end
+    def slice( start, length )
+      unless start.is_a?( Node ) or length.is_a?( Node )
+        if start < 0 or start + length > shape.last
+          raise "Range must be in 0 ... #{shape.last} " +
+                "(was #{start} ... #{start + length})"
+        end
+      end
+      start = INT.new start unless start.is_a? Node
+      length = INT.new length unless length.is_a? Node
+      index = Variable.new Hornetseye::INDEX( length )
+      Lambda.new( index, @term.subst( @index => index ).
+                         skip( index, start ) ).unroll
+    end
+    def decompose( i )
+      Lambda.new @index, @term.decompose( i )
+    end
+    def compilable?
+      @term.compilable?
+    end
+    def finalised?
+      @term.finalised?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/list.rb}\label{cha:multiarray-list-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class List
+    def initialize( n, options = {} )
+      @array = options[ :array ] || [ nil ] * n
+      @offset = options[ :offset ] || 0
+    end
+    def inspect
+      "List(#{@array.size - @offset})"
+    end
+    def to_s
+      inspect
+    end
+    def +( offset )
+      List.new 0, :array => @array, :offset => @offset + offset
+    end
+    def load( typecode )
+      @array[ @offset ]
+    end
+    def save( value )
+      @array[ @offset ] = value.get
+      value
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/lookup.rb}\label{cha:multiarray-lookup-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Lookup < Node
+    def initialize( p, index, stride )
+      @p, @index, @stride = p, index, stride
+    end
+    def memory
+      @p.memory
+    end
+    def strides
+      @p.strides
+    end
+    def stride( index )
+      @index == index ? @stride.get : @p.stride( index )
+    end
+    def descriptor( hash )
+      "Lookup(#{@p.descriptor( hash )},#{@index.descriptor( hash )}," +
+        "#{@stride.descriptor( hash )})"
+    end
+    def array_type
+      retval = @p.array_type
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def subst( hash )
+      @p.subst( hash ).lookup @index.subst( hash ), @stride.subst( hash )
+    end
+    def variables
+      @p.variables + @index.variables + @stride.variables
+    end
+    def strip
+      vars1, values1, term1 = @p.strip
+      vars2, values2, term2 = @stride.strip
+      return vars1 + vars2, values1 + values2,
+        Lookup.new( term1, @index, term2 )
+    end
+    def lookup( value, stride )
+      if value.is_a? Variable
+        Lookup.new self, value, stride
+      else
+        Lookup.new @p.lookup( value, stride ), @index, @stride
+      end
+    end
+    def skip( index, start )
+      if @index == index
+        Lookup.new @p.lookup( start, @stride ), @index, @stride
+      else
+        Lookup.new @p.skip( index, start ), @index, @stride
+      end
+    end
+    def element( i )
+      Lookup.new @p.element( i ), @index, @stride
+    end
+    def slice( start, length )
+      Lookup.new @p.slice( start, length ), @index, @stride
+    end
+    def decompose( i )
+      if typecode < Composite
+        Lookup.new @p.decompose( i ), @index, @stride * typecode.num_elements
+      else
+        Lookup.new @p.decompose( i ), @index, @stride
+      end
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/lut.rb}\label{cha:multiarray-lut-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Lut < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( *args )
+      @sources, @table = args[ 0 ... -1 ], args.last
+    end
+    def descriptor( hash )
+      "Lut(#{@sources.collect { |source| source.descriptor( hash ) }.join ','}," +
+        "#{@table.descriptor( hash )})"
+    end
+    def array_type
+      source_type = @sources.collect { |source| source.array_type }.
+        inject { |a,b| a.coercion b }
+      shape = @table.shape.first( @table.dimension - @sources.size ) +
+        source_type.shape
+      retval = Hornetseye::MultiArray @table.typecode, *shape
+      ( class << self; self; end ).instance_eval do
+        define_method( :array_type ) { retval }
+      end
+      retval
+    end
+    def demand
+      @sources.lut @table, :safe => false
+    end
+    def subst( hash )
+      self.class.new *( @sources.collect { |source| source.subst hash } +
+                        [ @table.subst( hash ) ] )
+    end
+    def variables
+      @sources.inject( @table.variables ) { |a,b| a + b.variables }
+    end
+    def strip
+      stripped = ( @sources + [ @table ] ).collect { |source| source.strip }
+      return stripped.inject( [] ) { |vars,elem| vars + elem[ 0 ] },
+           stripped.inject( [] ) { |values,elem| values + elem[ 1 ] },
+           self.class.new( *stripped.collect { |elem| elem[ 2 ] } )
+    end
+    def skip( index, start )
+      self.class.new *( @sources.skip( index, start ) +
+                        [ @table.skip( index, start ) ] )
+    end
+    def element( i )
+      sources, table = @sources, @table
+      if sources.any? { |source| source.dimension > 0 }
+        sources = sources.
+          collect { |source| source.dimension > 0 ? source.element( i ) : source }
+        self.class.new *( sources + [ table ] )
+      elsif table.dimension > sources.size
+        n = sources.size
+        self.class.new *( sources + [ table.unroll( n ).element( i ).roll( n ) ] )
+      else
+        super i
+      end
+    end
+    def slice( start, length )
+      source, table = @source, @table
+      if source.dimension > 1
+        source = source.slice( start, length ).roll
+        self.class.new( source, table, @n ).unroll
+      elsif table.dimension > @n
+        self.class.new( source,
+                        table.unroll( @n ).slice( start, length ).roll( @n + 1 ),
+                        @n ).unroll
+      else
+        super i
+      end
+    end
+    def decompose( i )
+      self.class.new *( @sources + [ @table.decompose( i ) ] )
+    end
+    def compilable?
+      @sources.all? { |source| source.compilable? } and @table.compilable?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/malloc.rb}\label{cha:multiarray-malloc-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Malloc
+    def load( typecode )
+      read( typecode.storage_size ).unpack( typecode.directive )
+    end
+    def save( value )
+      write value.values.pack( value.typecode.directive )
+      value
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/mask.rb}\label{cha:multiarray-mask-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Mask < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( dest, source, m, index )
+      @dest, @source, @m, @index = dest, source, m, index
+    end
+    def descriptor( hash )
+      "Mask(#{@dest.descriptor( hash )},#{@source.descriptor( hash )}," +
+        "#{@m.descriptor( hash )},#{@index.descriptor( hash )})"
+    end
+    def array_type
+      @dest.array_type
+    end
+    def demand
+      if variables.empty?
+        index = @index.simplify
+        if @m.dimension > 0
+          @m.shape.last.times do |i|
+            m = @m.element INT.new( i )
+            source = @source.element INT.new( i )
+            Mask.new( @dest, source, m, index ).demand
+          end  
+        else
+          @m.if do
+            Store.new( @dest.element( index ), @source ).demand
+            index.assign index + 1
+          end
+        end
+        if @index.is_a? Pointer_
+          @index.store index
+        else
+          @index.assign index
+        end
+        @dest
+      else
+        super
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @source.subst( hash ), @m.subst( hash ),
+                     @index.subst( hash )
+    end
+    def variables
+      @dest.variables + @source.variables + @m.variables + @index.variables
+    end
+    def strip
+      stripped = [ @dest, @source, @m, @index ].collect { |value| value.strip }
+      return stripped.inject( [] ) { |vars,elem| vars + elem[ 0 ] },
+           stripped.inject( [] ) { |values,elem| values + elem[ 1 ] },
+           self.class.new( *stripped.collect { |elem| elem[ 2 ] } )
+    end
+    def compilable?
+      [ @dest, @source, @m, @index ].all? { |value| value.compilable? }
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/methods.rb}\label{cha:multiarray-methods-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  module Methods
+    def Methods.included( mod )
+      define_unary_method  mod, :sqrt , :float
+      define_unary_method  mod, :log  , :float
+      define_unary_method  mod, :log10, :float
+      define_unary_method  mod, :exp  , :float
+      define_unary_method  mod, :cos  , :float
+      define_unary_method  mod, :sin  , :float
+      define_unary_method  mod, :tan  , :float
+      define_unary_method  mod, :acos , :float
+      define_unary_method  mod, :asin , :float
+      define_unary_method  mod, :atan , :float
+      define_unary_method  mod, :cosh , :float
+      define_unary_method  mod, :sinh , :float
+      define_unary_method  mod, :tanh , :float
+      define_unary_method  mod, :acosh, :float
+      define_unary_method  mod, :asinh, :float
+      define_unary_method  mod, :atanh, :float
+      define_binary_method mod, :atan2, :floating
+      define_binary_method mod, :hypot, :floating
+    end
+    def define_unary_method( mod, op, conversion = :identity )
+      mod.module_eval do
+        define_method( "#{op}_with_hornetseye" ) do |a|
+          if a.is_a? Node
+            if a.dimension == 0 and a.variables.empty?
+              target = a.typecode.send conversion
+              target.new mod.send( op, a.simplify.get )
+            else
+              Hornetseye::ElementWise( lambda { |x| mod.send op, x },
+                                       "#{mod}.#{op}",
+                                       lambda { |x| x.send conversion } ).
+                new( a ).force
+            end
+          else
+            send "#{op}_without_hornetseye", a
+          end
+        end
+        alias_method_chain op, :hornetseye
+        module_function "#{op}_without_hornetseye"
+        module_function op
+      end
+    end
+    module_function :define_unary_method
+    def define_binary_method( mod, op, coercion = :coercion )
+      mod.module_eval do
+        define_method( "#{op}_with_hornetseye" ) do |a,b|
+          if a.is_a? Node or b.is_a? Node
+            a = Node.match( a, b ).new a unless a.is_a? Node
+            b = Node.match( b, a ).new b unless b.is_a? Node
+            if a.dimension == 0 and a.variables.empty? and
+               b.dimension == 0 and b.variables.empty?
+              target = a.typecode.send coercion, b.typecode
+              target.new mod.send( op, a.simplify.get, b.simplify.get )
+            else
+              Hornetseye::ElementWise( lambda { |x,y| mod.send op, x, y },
+                                       "#{mod}.#{op}",
+                                       lambda { |t,u| t.send coercion, u } ).
+                new( a, b ).force
+            end
+          else
+            send "#{op}_without_hornetseye", a, b
+          end
+        end
+        alias_method_chain op, :hornetseye
+        module_function "#{op}_without_hornetseye"
+        module_function op
+      end
+    end
+    module_function :define_binary_method
+  end
+end
+module Math
+  include Hornetseye::Methods
+end
+\end{lstlisting}
+\subsection{multiarray/multiarray.rb}\label{cha:multiarray-multiarray-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class MultiArray
+    class << self
+      def new( element_type, *array_shape )
+        typecode = element_type.typecode
+        shape = element_type.shape + array_shape
+        options = shape.last.is_a?( Hash ) ? shape.pop : {}
+        count = options[ :count ] || 1
+        if shape.empty?
+          memory = options[ :memory ] ||
+                   typecode.memory_type.new( typecode.storage_size * count )
+          Hornetseye::Pointer( typecode ).new memory
+        else
+          size = shape.pop
+          stride = shape.inject( 1 ) { |a,b| a * b }
+          Hornetseye::lazy( size ) do |index|
+            pointer = new typecode, *( shape + [ :count => count * size,
+                                                 :memory => options[ :memory ] ] )
+            Lookup.new pointer, index, INT.new( stride )
+          end
+        end
+      end
+      def import( typecode, string, *shape )
+        t = Hornetseye::MultiArray typecode, *shape
+        if string.is_a? Malloc
+          memory = string
+        else
+          memory = Malloc.new t.storage_size
+          memory.write string
+        end
+        t.new memory
+      end
+      def []( *args )
+        target = Node.fit args
+        target[ *args ]
+      end
+      def laplacian_of_gaussian( sigma = 1.4, size = 9 )
+        def erf( x, sigma )
+          0.5 * Math.erf( x / ( Math.sqrt( 2.0 ) * sigma.abs ) )
+        end
+        def gauss_gradient( x, sigma )
+          -x / ( Math.sqrt( 2.0 * Math::PI * sigma.abs**5 ) ) *
+            Math.exp( -x**2 / ( 2.0 * sigma**2 ) )
+        end
+        retval = new DFLOAT, size, size
+        sum = 0
+        for y in 0 .. size - 1
+          y0 = y - 0.5 * size
+          y1 = y0 + 1
+          y_grad_diff = gauss_gradient( y1, sigma ) - gauss_gradient( y0, sigma )
+          y_erf_diff = erf( y1, sigma ) - erf( y0, sigma )
+          for x in 0..size-1
+            x0 = x - 0.5 * size
+            x1 = x0 + 1
+            x_grad_diff = gauss_gradient( x1, sigma ) - gauss_gradient( x0, sigma )
+            x_erf_diff = erf( x1, sigma ) - erf( x0, sigma )
+            retval[ y, x ] = y_grad_diff * x_erf_diff + y_erf_diff * x_grad_diff
+          end
+        end
+        retval
+      end
+    end
+  end
+  def MultiArray( element_type, *shape )
+    if shape.empty?
+      element_type
+    else
+      Hornetseye::Sequence MultiArray( element_type, *shape[ 0 ... -1 ] ),
+                           shape.last
+    end
+  end
+  module_function :MultiArray
+end
+\end{lstlisting}
+\subsection{multiarray/node.rb}\label{cha:multiarray-node-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Node
+    class << self
+      def to_s
+        descriptor( {} )
+      end
+      def descriptor( hash )
+        name
+      end
+      def match( value, context = nil )
+        retval = fit value
+        retval = retval.align context.basetype if context
+        retval
+      end
+      def typecode
+        self
+      end
+      def basetype
+        self
+      end
+      def typecodes
+        [ self ]
+      end
+      def array_type
+        self
+      end
+      def pointer_type
+        Hornetseye::Pointer( self )
+      end
+      def indgen( offset = 0, increment = 1 )
+        offset
+      end
+      def shape
+        []
+      end
+      def width
+        shape[0]
+      end
+      def height
+        shape[1]
+      end
+      def size
+        1
+      end
+      def empty?
+        size == 0
+      end
+      def dimension
+        0
+      end
+      def identity
+        self
+      end
+      def rgb?
+        false
+      end
+      def bool
+        BOOL
+      end
+      def scalar
+        self
+      end
+      def float_scalar
+        float.scalar
+      end
+      def coercion_bool( other )
+        other.coercion( self ).bool
+      end
+      def maxint
+        self
+      end
+      def coercion_maxint( other )
+        coercion( other ).maxint
+      end
+      def float
+        DFLOAT
+      end
+      def floating( other )
+        other.coercion( self ).float
+      end
+      def byte
+        BYTE
+      end
+      def coercion_byte( other )
+        coercion( other ).byte
+      end
+      def cond( a, b )
+        t = a.coercion b
+        Hornetseye::MultiArray( t.typecode, *shape ).coercion t
+      end
+      def to_type( dest )
+        dest
+      end
+      def variables
+        Set[]
+      end
+      def ===( other )
+        ( other == self ) or ( other.is_a? self ) or ( other.class == self )
+      end
+      def strip
+        return [], [], self
+      end
+      def subst( hash )
+        hash[ self ] || self
+      end
+      def check_shape( *args )
+        _shape = shape
+        args.each do |arg|
+          _arg_shape = arg.shape
+          if _shape.size < _arg_shape.size
+            raise "#{arg.inspect} has #{arg.dimension} dimension(s) " +
+                  "but should not have more than #{dimension}"
+          end
+          if ( _shape + _arg_shape ).all? { |s| s.is_a? Integer }
+            if _shape.last( _arg_shape.size ) != _arg_shape
+              raise "#{arg.inspect} has shape #{arg.shape.inspect} " +
+                    "(does not match last value(s) of #{shape.inspect})"
+            end
+          end
+        end
+      end
+      def compilable?
+        true
+      end
+      def finalised?
+        true
+      end
+    end
+    def array_type
+      self.class.array_type
+    end
+    def pointer_type
+      array_type.pointer_type
+    end
+    def typecode
+      array_type.typecode
+    end
+    def basetype
+      array_type.basetype
+    end
+    def shape
+      array_type.shape
+    end
+    def width
+      array_type.width
+    end
+    def height
+      array_type.height
+    end
+    def size
+      array_type.size
+    end
+    def storage_size
+      array_type.storage_size
+    end
+    def memorise
+      if memory
+        contiguous_strides = ( 0 ... dimension ).collect do |i|
+          shape[ 0 ... i ].inject( 1 ) { |a,b| a * b }
+        end
+        if strides == contiguous_strides
+          self
+        else
+          dup
+        end
+      else
+        dup
+      end
+    end
+    def memory
+      nil
+    end
+    def strides
+      nil
+    end
+    def stride( index )
+      nil
+    end
+    def empty?
+      array_type.empty?
+    end
+    def dimension
+      array_type.dimension
+    end
+    def rgb?
+      array_type.rgb?
+    end
+    def get
+      self
+    end
+    def to_a
+      if dimension == 0
+        force
+      else
+        n = shape.last
+        ( 0 ... n ).collect { |i| element( i ).to_a }
+      end
+    end
+    def inspect( indent = nil, lines = nil )
+      if variables.empty?
+        if dimension == 0 and not indent
+          "#{array_type.inspect}(#{force.inspect})" # !!!
+        else
+          if indent
+            prepend = ''
+          else
+            prepend = "#{array_type.inspect}:\n"
+            indent = 0
+            lines = 0
+          end
+          if empty?
+            retval = '[]'
+          else
+            retval = '[ '
+            for i in 0 ... array_type.num_elements
+              x = element i
+              if x.dimension > 0
+                if i > 0
+                  retval += ",\n  "
+                  lines += 1
+                  if lines >= 10
+                    retval += '...' if indent == 0
+                    break
+                  end
+                  retval += '  ' * indent
+                end
+                str = x.inspect indent + 1, lines
+                lines += str.count "\n"
+                retval += str
+                if lines >= 10
+                  retval += '...' if indent == 0
+                  break
+                end
+              else
+                retval += ', ' if i > 0
+                str = x.force.inspect # !!!
+                if retval.size + str.size >= 74 - '...'.size -
+                    '[  ]'.size * indent.succ
+                  retval += '...'
+                  break
+                else
+                  retval += str
+                end
+              end
+            end
+            retval += ' ]' unless lines >= 10
+          end
+          prepend + retval
+        end
+      else
+        to_s
+      end
+    end
+    def to_s
+      descriptor( {} )
+    end
+    def descriptor( hash )
+      'Node()'
+    end
+    def dup
+      retval = array_type.new
+      retval[] = self
+      retval
+    end
+    def subst( hash )
+      hash[ self ] || self
+    end
+    def compilable?
+      typecode.compilable?
+    end
+    def finalised?
+      self.class.finalised?
+    end
+    def []( *indices )
+      if indices.empty?
+        force
+      else
+        if indices.last.is_a? Range
+          view = slice indices.last.min, indices.last.size
+        else
+          view = element indices.last
+        end
+        view[ *indices[ 0 ... -1 ] ]
+      end
+    end
+    def check_shape( *args )
+      array_type.check_shape *args.collect { |arg| arg.array_type }
+    end
+    def []=( *indices )
+      value = indices.pop
+      value = typecode.new value unless value.is_a? Node
+      if indices.empty?
+        check_shape value
+        unless compilable? and value.compilable? and dimension > 0
+          Store.new( self, value ).demand
+        else
+          GCCFunction.run Store.new( self, value )
+        end
+        value
+      else
+        if indices.last.is_a? Range
+          view = slice indices.last.min, indices.last.size
+        else
+          view = element indices.last
+        end
+        view[ *indices[ 0 ... -1 ] ] = value
+      end
+    end
+    def variables
+      Set[]
+    end
+    def strip
+      return [], [], self
+    end
+    def demand
+      self
+    end
+    def force
+      if finalised?
+        get
+      elsif ( dimension > 0 and Thread.current[ :lazy ] ) or not variables.empty?
+        self
+      elsif compilable?
+        retval = pointer_type.new
+        GCCFunction.run Store.new( retval, self )
+        retval.demand.get
+      else
+        Store.new( array_type.new, self ).demand.get
+      end
+    end
+    def simplify
+      dimension == 0 ? demand.dup : demand
+    end
+    def coerce( other )
+      if other.is_a? Node
+        return other, self
+      else
+        return Node.match( other, self ).new( other ), self
+      end
+    end
+    def decompose( i )
+      self
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/object.rb}\label{cha:multiarray-object-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class OBJECT < Element
+    class << self
+      def inspect
+        'OBJECT'
+      end
+      def descriptor( hash )
+        inspect
+      end
+      def memory_type
+        List
+      end
+      def storage_size
+        1
+      end
+      def default
+        nil
+      end
+      def coercion( other )
+        if other < Sequence_
+          other.coercion self
+        else
+          self
+        end
+      end
+      def coerce( other )
+        return self, self
+      end
+      def bool
+        self
+      end
+      def float
+        OBJECT
+      end
+      def compilable?
+        false
+      end
+    end
+    module Match
+      def fit( *values )
+        OBJECT
+      end
+      def align( context )
+        self
+      end
+    end
+    Node.extend Match
+  end
+  def OBJECT( value )
+    OBJECT.new value
+  end
+  module_function :OBJECT
+end
+\end{lstlisting}
+\subsection{multiarray/operations.rb}\label{cha:multiarray-operations-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  module Operations
+    def define_unary_op( op, conversion = :identity )
+      define_method( op ) do
+        if dimension == 0 and variables.empty?
+          target = typecode.send conversion
+          target.new simplify.get.send( op )
+        else
+          Hornetseye::ElementWise( lambda { |x| x.send op }, op,
+                                   lambda { |t| t.send conversion } ).
+            new( self ).force
+        end
+      end
+    end
+    module_function :define_unary_op
+    def define_binary_op( op, coercion = :coercion )
+      define_method( op ) do |other|
+        unless other.is_a? Node
+          other = Node.match( other, typecode ).new other
+        end
+        if dimension == 0 and variables.empty? and
+            other.dimension == 0 and other.variables.empty?
+          target = array_type.send coercion, other.array_type
+          target.new simplify.get.send( op, other.simplify.get )
+        else
+          Hornetseye::ElementWise( lambda { |x,y| x.send op, y }, op,
+                                   lambda { |t,u| t.send coercion, u } ).
+            new( self, other ).force
+        end
+      end
+    end
+    module_function :define_binary_op
+    define_unary_op :zero?, :bool
+    define_unary_op :nonzero?, :bool
+    define_unary_op :not, :bool
+    define_unary_op :~
+    define_unary_op :-@
+    define_unary_op :conj
+    define_unary_op :abs, :scalar
+    define_unary_op :arg, :float_scalar
+    define_unary_op :floor
+    define_unary_op :ceil
+    define_unary_op :round
+    define_binary_op :+
+    define_binary_op :-
+    define_binary_op :*
+    define_binary_op :**, :coercion_maxint
+    define_binary_op :/
+    define_binary_op :%
+    define_binary_op :and, :coercion_bool
+    define_binary_op :or, :coercion_bool
+    define_binary_op :&
+    define_binary_op :|
+    define_binary_op :^
+    define_binary_op :<<
+    define_binary_op :>>
+    define_binary_op :eq, :coercion_bool
+    define_binary_op :ne, :coercion_bool
+    define_binary_op :<=, :coercion_bool
+    define_binary_op :<, :coercion_bool
+    define_binary_op :>=, :coercion_bool
+    define_binary_op :>, :coercion_bool
+    define_binary_op :<=>, :coercion_byte
+    define_binary_op :minor
+    define_binary_op :major
+    def +@
+      self
+    end
+    def to_type( dest )
+      if dimension == 0 and variables.empty?
+        target = typecode.to_type dest
+        target.new( simplify.get ).simplify
+      else
+        key = "to_#{dest.to_s.downcase}"
+        Hornetseye::ElementWise( lambda { |x| x.to_type dest }, key,
+                                 lambda { |t| t.to_type dest } ).new( self ).force
+      end
+    end
+    def to_type_with_rgb( dest )
+      if typecode < RGB_
+        if dest < FLOAT_
+          lazy { r * 0.299 + g * 0.587 + b * 0.114 }.to_type dest
+        elsif dest < INT_
+          lazy { ( r * 0.299 + g * 0.587 + b * 0.114 ).round }.to_type dest
+        else
+          to_type_without_rgb dest
+        end
+      else
+        to_type_without_rgb dest
+      end
+    end
+    alias_method_chain :to_type, :rgb
+    def to_type_with_identity( dest )
+      if dest == typecode
+        self
+      else
+        to_type_without_identity dest
+      end
+    end
+    alias_method_chain :to_type, :identity
+    def reshape( *ret_shape )
+      target = Hornetseye::MultiArray( typecode, *ret_shape )
+      if target.size != size
+        raise "#{target.size} is of size #{target.size} but should be of size " +
+          "#{size}"
+      end
+      target.new memorise.memory
+    end
+    def conditional( a, b )
+      unless a.is_a? Node
+        a = Node.match( a, b.is_a?( Node ) ? b : nil ).new a
+      end
+      unless b.is_a? Node
+        b = Node.match( b, a.is_a?( Node ) ? a : nil ).new b
+      end
+      if dimension == 0 and variables.empty? and
+        a.dimension == 0 and a.variables.empty? and
+        b.dimension == 0 and b.variables.empty?
+        target = array_type.cond a.array_type, b.array_type
+        target.new simplify.get.conditional( proc { a.simplify.get },
+                                             proc { b.simplify.get } )
+      else
+        Hornetseye::ElementWise( lambda { |x,y,z| x.conditional y, z }, :conditional,
+                                 lambda { |t,u,v| t.cond u, v } ).
+          new( self, a, b ).force
+      end
+    end
+    def malloc
+      get.malloc 
+    end
+    def if( &action )
+      simplify.get.if &action
+    end
+    def if_else( action1, action2 )
+      simplify.get.if_else action1, action2
+    end
+    def <=>( other )
+      Hornetseye::finalise do
+        ( self < other ).conditional -1, ( self > other ).conditional( 1, 0 )
+      end
+    end
+    def transpose( *order )
+      term = self
+      variables = shape.reverse.collect do |i|
+        var = Variable.new Hornetseye::INDEX( i )
+        term = term.element var
+        var
+      end.reverse
+      order.collect { |o| variables[o] }.
+        inject( term ) { |retval,var| Lambda.new var, retval }
+    end
+    def roll( n = 1 )
+      if n < 0
+        unroll -n
+      else
+        order = ( 0 ... dimension ).to_a
+        n.times { order = order[ 1 .. -1 ] + [ order.first ] }
+        transpose *order
+      end
+    end
+    def unroll( n = 1 )
+      if n < 0
+        roll -n
+      else
+        order = ( 0 ... dimension ).to_a
+        n.times { order = [ order.last ] + order[ 0 ... -1 ] }
+        transpose *order
+      end
+    end
+    def collect( &action )
+      var = Variable.new typecode
+      block = action.call var
+      conversion = lambda { |t| t.to_type action.call( Variable.new( t.typecode ) ) }
+      Hornetseye::ElementWise( action, block.to_s, conversion ).new( self ).force
+    end
+    alias_method :map, :collect
+    def inject( initial = nil, options = {} )
+      unless initial.nil?
+        initial = Node.match( initial ).new initial unless initial.is_a? Node
+        initial_typecode = initial.typecode
+      else
+        initial_typecode = typecode
+      end
+      var1 = options[ :var1 ] || Variable.new( initial_typecode )
+      var2 = options[ :var2 ] || Variable.new( typecode )
+      block = options[ :block ] || yield( var1, var2 )
+      if dimension == 0
+        if initial
+          block.subst( var1 => initial, var2 => self ).simplify
+        else
+          demand
+        end
+      else
+        index = Variable.new Hornetseye::INDEX( nil )
+        value = element( index ).inject nil, :block => block,
+                                        :var1 => var1, :var2 => var2
+        value = typecode.new value unless value.is_a? Node
+        if initial.nil? and index.size.get == 0
+          raise "Array was empty and no initial value for injection was given"
+        end
+        Inject.new( value, index, initial, block, var1, var2 ).force
+      end
+    end
+    def each( &action )
+      if dimension > 0
+        shape.last.times { |i| element( INT.new( i ) ).each &action }
+      else
+        action.call demand.get
+      end
+    end
+    def eq_with_multiarray( other )
+      if other.is_a? Node
+        if variables.empty?
+          if other.array_type == array_type
+            Hornetseye::finalise { eq( other ).inject( true ) { |a,b| a.and b } }
+          else
+            false
+          end
+        else
+          eq_without_multiarray other
+        end
+      else
+        false
+      end
+    end
+    alias_method_chain :==, :multiarray, :eq
+    def min( initial = nil )
+      inject( initial ) { |a,b| a.minor b }
+    end
+    def max( initial = nil )
+      inject( initial ) { |a,b| a.major b }
+    end
+    def sum
+      Hornetseye::lazy { to_type typecode.maxint }.inject { |a,b| a + b }
+    end
+    def range( initial = nil )
+      min( initial ? initial.min : nil ) .. max( initial ? initial.max : nil )
+    end
+    def between?( a, b )
+      Hornetseye::lazy { ( self >= a ).and self <= b }.force
+    end
+    def normalise( range = 0 .. 0xFF )
+      if range.exclude_end?
+        raise "Normalisation does not support ranges with end value " +
+              "excluded (such as #{range})"
+      end
+      lower, upper = min, max
+      if lower.is_a? RGB or upper.is_a? RGB
+        current = [ lower.r, lower.g, lower.b ].min ..
+                  [ upper.r, upper.g, upper.b ].max
+      else
+        current = min .. max
+      end
+      if current.last != current.first
+        factor =
+          ( range.last - range.first ).to_f / ( current.last - current.first )
+        collect { |x| x * factor + ( range.first - current.first * factor ) }
+      else
+        self + ( range.first - current.first )
+      end
+    end
+    def clip( range = 0 .. 0xFF )
+      if range.exclude_end?
+        raise "Clipping does not support ranges with end value " +
+              "excluded (such as #{range})"
+      end
+      collect { |x| x.major( range.begin ).minor range.end }
+    end
+    def fill!( value = typecode.default )
+      self[] = value
+      self
+    end
+    def diagonal( initial = nil, options = {} )
+      if dimension == 0
+        demand
+      else
+        if initial
+          unless initial.is_a? Node
+            initial = Node.match( initial ).new initial
+          end
+          initial_typecode = initial.typecode
+        else
+          initial_typecode = typecode
+        end
+        index0 = Variable.new Hornetseye::INDEX( nil )
+        index1 = Variable.new Hornetseye::INDEX( nil )
+        index2 = Variable.new Hornetseye::INDEX( nil )
+        var1 = options[ :var1 ] || Variable.new( initial_typecode )
+        var2 = options[ :var2 ] || Variable.new( typecode )
+        block = options[ :block ] || yield( var1, var2 )
+        value = element( index1 ).element( index2 ).
+          diagonal initial, :block => block, :var1 => var1, :var2 => var2
+        term = Diagonal.new( value, index0, index1, index2, initial,
+                             block, var1, var2 )
+        index0.size[] ||= index1.size[]
+        Lambda.new( index0, term ).force
+      end
+    end
+    def product( filter )
+      filter = Node.match( filter, typecode ).new filter unless filter.is_a? Node
+      if filter.dimension > dimension
+        raise "Filter has #{filter.dimension} dimension(s) but should " +
+              "not have more than #{dimension}"
+      end
+      filter = Hornetseye::lazy( 1 ) { filter } while filter.dimension < dimension
+      if filter.dimension == 0
+        self * filter
+      else
+        Hornetseye::lazy { |i,j| self[j].product filter[i] }
+      end
+    end
+    def convolve( filter )
+      filter = Node.match( filter, typecode ).new filter unless filter.is_a? Node
+      array = self
+      ( dimension - filter.dimension ).times { array = array.roll }
+      array.product( filter ).diagonal { |s,x| s + x }
+    end
+    def spread( n = 3 )
+      if dimension > 0
+        Hornetseye::lazy( n, shape.last ) { |i,j| self[j].spread n }
+      else
+        self
+      end
+    end
+    def erode( n = 3 )
+      spread( n ).diagonal { |m,x| m.minor x }
+    end
+    def dilate( n = 3 )
+      spread( n ).diagonal { |m,x| m.major x }
+    end
+    def sobel( direction )
+      ( dimension - 1 ).downto( 0 ).inject self do |retval,i|
+        filter = i == direction ? Hornetseye::Sequence( SINT, 3 )[ -1, 0, 1 ] :
+                                  Hornetseye::Sequence( SINT, 3 )[ 1, 2, 1 ]
+        Hornetseye::lazy { retval.convolve filter }
+      end.force
+    end
+    def gauss_blur( sigma, max_error = 1.0 / 0x100 )
+      filter_type = DFLOAT.align typecode
+      filter = Sequence[ *Array.gauss_blur_filter( sigma, max_error / dimension ) ].
+        to_type filter_type
+      ( dimension - 1 ).downto( 0 ).inject self do |retval,i|
+        retval.convolve filter
+      end
+    end
+    def gauss_gradient( sigma, direction, max_error = 1.0 / 0x100 )
+      filter_type = DFLOAT.align typecode
+      gradient =
+        Sequence[ *Array.gauss_gradient_filter( sigma, max_error / dimension ) ].
+        to_type filter_type
+      blur =
+        Sequence[ *Array.gauss_blur_filter( sigma, max_error / dimension ) ].
+        to_type filter_type
+      ( dimension - 1 ).downto( 0 ).inject self do |retval,i|
+        filter = i == direction ? gradient : blur
+        retval.convolve filter
+      end.force
+    end
+    def histogram( *ret_shape )
+      options = ret_shape.last.is_a?( Hash ) ? ret_shape.pop : {}
+      options = { :weight => UINT.new( 1 ), :safe => true }.merge options
+      unless options[ :weight ].is_a? Node
+        options[ :weight ] =
+          Node.match( options[ :weight ] ).maxint.new options[ :weight ]
+      end
+      if ( shape.first != 1 or dimension == 1 ) and ret_shape.size == 1
+        [ self ].histogram *( ret_shape + [ options ] )
+      else
+        ( 0 ... shape.first ).collect { |i| unroll[i] }.
+          histogram *( ret_shape + [ options ] )
+      end
+    end
+    def lut( table, options = {} )
+      if ( shape.first != 1 or dimension == 1 ) and table.dimension == 1
+        [ self ].lut table, options
+      else
+        ( 0 ... shape.first ).collect { |i| unroll[i] }.lut table, options
+      end
+    end
+    def warp( *field )
+      options = field.last.is_a?( Hash ) ? field.pop : {}
+      options = { :safe => true, :default => typecode.default }.merge options
+      if options[ :safe ]
+        if field.size > dimension
+          raise "Number of arrays for warp (#{field.size}) is greater than the " +
+                "number of dimensions of source (#{dimension})"
+        end
+        Hornetseye::lazy do
+          ( 0 ... field.size ).
+            collect { |i| ( field[i] >= 0 ).and( field[i] < shape[i] ) }.
+            inject { |a,b| a.and b }
+        end.conditional Lut.new( *( field + [ self ] ) ), options[ :default ]
+      else
+        field.lut self, :safe => false
+      end
+    end
+    def integral
+      left = pointer_type.new
+      block = Integral.new left, self
+      if block.compilable?
+        GCCFunction.run block
+      else
+        block.demand
+      end
+      left
+    end
+    def components( options = {} )
+      if shape.any? { |x| x <= 1 }
+        raise "Every dimension must be greater than 1 (shape was #{shape})"
+      end
+      options = { :target => UINT, :default => typecode.default }.merge options
+      target = options[ :target ]
+      default = options[ :default ]
+      default = typecode.new default unless default.is_a? Node
+      left = Hornetseye::MultiArray( target, *shape ).new
+      labels = Sequence.new target, size; labels[0] = 0
+      rank = Sequence.uint size; rank[0] = 0
+      n = Hornetseye::Pointer( INT ).new; n.store INT.new( 0 )
+      block = Components.new left, self, default, target.new( 0 ), labels, rank, n
+      if block.compilable?
+        Hornetseye::GCCFunction.run block
+      else
+        block.demand
+      end
+      labels = labels[ 0 .. n.demand.get ]
+      left.lut labels.lut( labels.histogram( labels.size, :weight => target.new( 1 ) ).
+                           minor( 1 ).integral - 1 )
+    end
+    def mask( m )
+      check_shape m
+      left = MultiArray.new typecode, *( shape.first( dimension - m.dimension ) +
+                                         [ m.size ] )
+      index = Hornetseye::Pointer( INT ).new
+      index.store INT.new( 0 )
+      block = Mask.new left, self, m, index
+      if block.compilable?
+        GCCFunction.run block
+      else
+        block.demand
+      end
+      left[ 0 ... index[] ].roll
+    end
+    def unmask( m, options = {} )
+      options = { :safe => true, :default => typecode.default }.merge options
+      default = options[ :default ]
+      default = typecode.new default unless default.is_a? Node
+      m.check_shape default
+      if options[ :safe ]
+        if m.to_ubyte.sum > shape.last
+          raise "#{m.to_ubyte.sum} value(s) of the mask are true but the last " +
+            "dimension of the array for unmasking only has #{shape.last} value(s)"
+        end
+      end
+      left = Hornetseye::MultiArray( array_type.element_type, *m.shape ).
+             coercion( default.array_type ).new
+      index = Hornetseye::Pointer( INT ).new
+      index.store INT.new( 0 )
+      block = Unmask.new left, self, m, index, default
+      if block.compilable?
+        GCCFunction.run block
+      else
+        block.demand
+      end
+      left
+    end
+    def flip( *dimensions )
+      field = ( 0 ... dimension ).collect do |i|
+        if dimensions.member? i
+          Hornetseye::lazy( *shape ) { |*args| shape[i] - 1 - args[i] }
+        else
+          Hornetseye::lazy( *shape ) { |*args| args[i] }
+        end
+      end
+      warp *( field + [ :safe => false ] )
+    end
+    def shift( *offset )
+      if offset.size != dimension
+        raise "#{offset.size} offset(s) were given but array has " +
+              "#{dimension} dimension(s)"
+      end
+      retval = array_type.new
+      target, source, open, close = [], [], [], []
+      ( shape.size - 1 ).step( 0, -1 ) do |i|
+        callcc do |pass|
+          delta = offset[i] % shape[i]
+          source[i] = 0 ... shape[i] - delta
+          target[i] = delta ... shape[i]
+          callcc do |c|
+            open[i] = c
+            pass.call
+          end
+          source[i] = shape[i] - delta ... shape[i]
+          target[i] = 0 ... delta
+          callcc do |c|
+            open[i] = c
+            pass.call
+          end
+          close[i].call
+        end
+      end
+      retval[ *target ] = self[ *source ]
+      for i in 0 ... shape.size
+        callcc do |c|
+          close[i] = c
+          open[i].call
+        end
+      end
+      retval
+    end
+    def downsample( *rate )
+      options = rate.last.is_a?( Hash ) ? rate.pop : {}
+      options = { :offset => rate.collect { |r| r - 1 } }.merge options
+      offset = options[ :offset ]
+      if rate.size != dimension
+        raise "#{rate.size} sampling rate(s) given but array has " +
+              "#{dimension} dimension(s)"
+      end
+      if offset.size != dimension
+        raise "#{offset.size} sampling offset(s) given but array has " +
+              "#{dimension} dimension(s)"
+      end
+      ret_shape = ( 0 ... dimension ).collect do |i|
+        ( shape[i] + rate[i] - 1 - offset[i] ).div rate[i]
+      end
+      field = ( 0 ... dimension ).collect do |i|
+        Hornetseye::lazy( *ret_shape ) { |*args| args[i] * rate[i] + offset[i] }
+      end
+      warp *( field + [ :safe => false ] )
+    end
+  end
+  class Node
+    include Operations
+  end
+end
+class Array
+  def histogram( *ret_shape )
+    options = ret_shape.last.is_a?( Hash ) ? ret_shape.pop : {}
+    options = { :weight => Hornetseye::UINT. new( 1 ), :safe => true }.merge options
+    unless options[ :weight ].is_a? Hornetseye::Node
+      options[ :weight ] =
+        Hornetseye::Node.match( options[ :weight ] ).maxint.new options[ :weight ]
+    end
+    weight = options[ :weight ]
+    if options[ :safe ]
+      if size != ret_shape.size
+        raise "Number of arrays for histogram (#{size}) differs from number of " +
+              "dimensions of histogram (#{ret_shape.size})"
+      end
+      array_types = collect { |source| source.array_type }
+      source_type = array_types.inject { |a,b| a.coercion b }
+      source_type.check_shape *array_types
+      source_type.check_shape options[ :weight ]
+      for i in 0 ... size
+        range = self[ i ].range 0 ... ret_shape[ i ]
+        if range.begin < 0
+          raise "#{i+1}th dimension of index must be in 0 ... #{ret_shape[i]} " +
+                "(but was #{range.begin})"
+        end
+        if range.end >= ret_shape[ i ]
+          raise "#{i+1}th dimension of index must be in 0 ... #{ret_shape[i]} " +
+                "(but was #{range.end})"
+        end
+      end
+    end
+    left = Hornetseye::MultiArray.new weight.typecode, *ret_shape
+    left[] = 0
+    block = Hornetseye::Histogram.new left, weight, *self
+    if block.compilable?
+      Hornetseye::GCCFunction.run block
+    else
+      block.demand
+    end
+    left
+  end
+  def lut( table, options = {} )
+    options = { :safe => true }.merge options
+    if options[ :safe ]
+      if size > table.dimension
+        raise "Number of arrays for lookup (#{size}) is greater than the " +
+              "number of dimensions of LUT (#{table.dimension})"
+      end
+      array_types = collect { |source| source.array_type }
+      source_type = array_types.inject { |a,b| a.coercion b }
+      source_type.check_shape *array_types
+      for i in 0 ... size
+        offset = table.dimension - size
+        range = self[ i ].range 0 ... table.shape[ i + offset ]
+        if range.begin < 0
+          raise "#{i+1}th index must be in 0 ... #{table.shape[i]} " +
+                "(but was #{range.begin})"
+        end
+        if range.end >= table.shape[ i + offset ]
+          raise "#{i+1}th index must be in 0 ... " +
+                "#{table.shape[ i + offset ]} (but was #{range.end})"
+        end
+      end
+    end
+    if all? { |source| source.dimension == 0 and source.variables.empty? }
+      result = table
+      ( table.dimension - 1 ).downto( 0 ) do |i|
+        result = result.element( self[ i ].demand ).demand
+      end
+      result
+    else
+      Hornetseye::Lut.new( *( self + [ table ] ) ).force
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/pointer.rb}\label{cha:multiarray-pointer-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Pointer_ < Node
+    class << self
+      attr_accessor :target
+      def construct( *args )
+        new *args
+      end
+      def inspect
+        "*(#{target.inspect})"
+      end
+      def descriptor( hash )
+        inspect
+      end
+      def default
+        target.memory_type.new target.storage_size
+      end
+      def ==( other )
+        other.is_a? Class and other < Pointer_ and
+          target == other.target
+      end
+      def hash
+        [ :Pointer_, target ].hash
+      end
+      def eql?
+        self == other
+      end
+      def typecode
+        target
+      end
+      def basetype
+        target.basetype
+      end
+      def array_type
+        target
+      end
+      def pointer_type
+        self
+      end
+      def finalised?
+        false
+      end
+    end
+    def initialize( value = self.class.default )
+      @value = value
+    end
+    def memory
+      @value
+    end
+    def strides
+      []
+    end
+    def strip
+      variable = Variable.new self.class
+      return [ variable ], [ self ], variable
+    end
+    def descriptor( hash )
+      "#{self.class.to_s}(#{@value.to_s})"
+    end
+    def assign( value )
+      if @value.respond_to? :assign
+        @value.assign value.simplify.get
+      else
+        @value = value.simplify.get
+      end
+      value
+    end
+    def store( value )
+      result = value.simplify
+      self.class.target.new( result.get ).write @value
+      result
+    end
+    def demand
+      self.class.target.fetch( @value ).simplify
+    end
+    def lookup( value, stride )
+      if value.is_a? Variable
+        Lookup.new self, value, stride
+      else
+        self.class.new @value + ( stride.get *
+                                  self.class.target.storage_size ) * value.get
+      end
+    end
+    def skip( index, start )
+      self
+    end
+    def decompose( i )
+      if self.class.target < Composite
+        pointer = Hornetseye::Pointer( self.class.target.element_type ).new @value
+        pointer.lookup INT.new( i ), INT.new( 1 )
+      else
+        super
+      end
+    end
+    def values
+      [ @value ]
+    end
+  end
+  def Pointer( target )
+    p = Class.new Pointer_
+    p.target = target
+    p
+  end
+  module_function :Pointer
+end
+\end{lstlisting}
+\subsection{multiarray/random.rb}\label{cha:multiarray-random-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Random < Node
+    def initialize( dest, n )
+      @dest, @n = dest, n
+    end
+    def descriptor( hash )
+      "Random(#{@dest.descriptor( hash )},#{@n.descriptor( hash )})"
+    end
+    def array_type
+      @dest.array_type
+    end
+    def demand
+      if variables.empty?
+        if dimension > 0
+          shape.last.times do |i|
+            dest = @dest.element INT.new( i )
+            Random.new( dest, @n ).demand
+          end  
+        else
+          if @n.typecode < INT_ or ( @n.typecode < OBJECT and @n.get.is_a? Integer )
+            @dest.store @n.typecode.new( @n.get.lrand )
+          else
+            @dest.store @n.typecode.new( @n.get.drand )
+          end
+        end
+        @dest
+      else
+        super
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @n.subst( hash )
+    end
+    def variables
+      @dest.variables + @n.variables
+    end
+    def strip
+      vars1, values1, term1 = @dest.strip
+      vars2, values2, term2 = @n.strip
+      return vars1 + vars2, values1 + values2, Random.new( term1, term2 )
+    end
+    def compilable?
+      @dest.compilable? and @n.compilable?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/rgb.rb}\label{cha:multiarray-rgb-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class RGB
+    class << self
+      def generic?( value )
+        value.is_a?( Numeric ) or value.is_a?( GCCValue )
+      end
+      def define_unary_op( op )
+        define_method( op ) do
+          RGB.new r.send( op ), g.send( op ), b.send( op )
+        end
+      end
+      def define_binary_op( op )
+        define_method( op ) do |other|
+          if other.is_a? RGB
+            RGB.new r.send( op, other.r ), g.send( op, other.g ),
+                    b.send( op, other.b )
+          elsif RGB.generic? other
+            RGB.new r.send( op, other ), g.send( op, other ),
+                    b.send( op, other )
+          else
+            x, y = other.coerce self
+            x.send op, y
+          end
+        end
+      end
+    end
+    attr_accessor :r
+    attr_accessor :g
+    attr_accessor :b
+    def initialize( r, g, b )
+      @r, @g, @b = r, g, b
+    end
+    def inspect
+      "RGB(#{@r.inspect},#{@g.inspect},#{@b.inspect})"
+    end
+    def to_s
+      "RGB(#{@r.to_s},#{@g.to_s},#{@b.to_s})"
+    end
+    def assign( value )
+      @r, @g, @b = value.r, value.g, value.b
+    end
+    def coerce( other )
+      if other.is_a? RGB
+        return other, self
+      else
+        return RGB.new( other, other, other ), self
+      end
+    end
+    def +@
+      self
+    end
+    define_unary_op  :~
+    define_unary_op  :-@
+    define_unary_op  :floor
+    define_unary_op  :ceil
+    define_unary_op  :round
+    define_binary_op :+
+    define_binary_op :-
+    define_binary_op :*
+    define_binary_op :**
+    define_binary_op :/
+    define_binary_op :%
+    define_binary_op :&
+    define_binary_op :|
+    define_binary_op :^
+    define_binary_op :<<
+    define_binary_op :>>
+    define_binary_op :minor
+    define_binary_op :major
+    def zero?
+      @r.zero?.and( @g.zero? ).and( @b.zero? )
+    end
+    def nonzero?
+      @r.nonzero?.or( @g.nonzero? ).or( @b.nonzero? )
+    end
+    def swap_rgb
+      RGB.new @b, @g, @r
+    end
+    def ==( other )
+      if other.is_a? RGB
+        @r.eq( other.r ).and( @g.eq( other.g ) ).and( @b.eq( other.b ) )
+      elsif RGB.generic? other
+        @r.eq( other ).and( @g.eq( other ) ).and( @b.eq( other ) )
+      else
+        false
+      end
+    end
+    def decompose( i )
+      [ @r, @g, @b ][ i ]
+    end
+  end
+end
+module Hornetseye
+  class RGB_ < Composite
+    class << self
+      def inherited( subclass )
+        subclass.num_elements = 3
+      end
+      def construct( r, g, b )
+        new RGB.new( r, g, b )
+      end
+      def default
+        RGB.new 0, 0, 0
+      end
+      IDENTIFIER = { BYTE    => 'BYTERGB',
+                     UBYTE   => 'UBYTERGB',
+                     SINT    => 'SINTRGB',
+                     USINT   => 'USINTRGB',
+                     INT     => 'INTRGB',
+                     UINT    => 'UINTRGB',
+                     LONG    => 'LONGRGB',
+                     ULONG   => 'ULONGRGB',
+                     SFLOAT  => 'SFLOATRGB',
+                     DFLOAT  => 'DFLOATRGB' }
+      def inspect
+        unless element_type.nil?
+          retval = IDENTIFIER[ element_type ] || "RGB(#{element_type.inspect})"
+          ( class << self; self; end ).instance_eval do
+            define_method( :inspect ) { retval }
+          end
+          retval
+        else
+          super
+        end
+      end
+      def maxint
+        Hornetseye::RGB element_type.maxint
+      end
+      def float
+        Hornetseye::RGB element_type.float
+      end
+      def coercion( other )
+        if other < RGB_
+          Hornetseye::RGB element_type.coercion( other.element_type )
+        elsif other < INT_ or other < FLOAT_
+          Hornetseye::RGB element_type.coercion( other )
+        else
+          super other
+        end
+      end
+      def coerce( other )
+        if other < RGB_
+          return other, self
+        elsif other < INT_ or other < FLOAT_
+          return Hornetseye::RGB( other ), self
+        else
+          super other
+        end
+      end
+      def ==( other )
+        other.is_a? Class and other < RGB_ and
+          element_type == other.element_type
+      end
+      def hash
+        [ :RGB_, element_type ].hash
+      end
+      def eql?( other )
+        self == other
+      end
+      def rgb?
+        true
+      end
+    end
+    def initialize( value = self.class.default )
+      if Thread.current[ :function ].nil? or
+         [ value.r, value.g, value.b ].all? { |c| c.is_a? GCCValue }
+        @value = value
+      else
+        r = GCCValue.new Thread.current[ :function ], value.r.to_s
+        g = GCCValue.new Thread.current[ :function ], value.g.to_s
+        b = GCCValue.new Thread.current[ :function ], value.b.to_s
+        @value = RGB.new r, g, b
+      end
+    end
+    def dup
+      if Thread.current[ :function ]
+        r = Thread.current[ :function ].variable self.class.element_type, 'v'
+        g = Thread.current[ :function ].variable self.class.element_type, 'v'
+        b = Thread.current[ :function ].variable self.class.element_type, 'v'
+        r.assign @value.r
+        g.assign @value.g
+        b.assign @value.b
+        self.class.new RGB.new( r, g, b )
+      else
+        self.class.new get
+      end
+    end
+    def assign( value )
+      value = value.simplify
+      if @value.r.respond_to? :assign
+        @value.r.assign value.get.r
+      else
+        @value.r = value.get.r
+      end
+      if @value.g.respond_to? :assign
+        @value.g.assign value.get.g
+      else
+        @value.g = value.get.g
+      end
+      if @value.b.respond_to? :assign
+        @value.b.assign value.get.b
+      else
+        @value.b = value.get.b
+      end
+      value
+    end
+    def values
+      [ @value.r, @value.g, @value.b ]
+    end
+    module Match
+      def fit( *values )
+        if values.all? { |value| value.is_a? RGB or value.is_a? Float or
+                                 value.is_a? Integer }
+          if values.any? { |value| value.is_a? RGB }
+            elements = values.inject( [] ) do |arr,value|
+              if value.is_a? RGB
+                arr + [ value.r, value.g, value.b ]
+              else
+                arr + [ value ]
+              end
+            end
+            element_fit = fit *elements
+            if element_fit == OBJECT
+              super *values
+            else
+              Hornetseye::RGB element_fit
+            end
+          else
+            super *values
+          end
+        else
+          super *values
+        end
+      end
+      def align( context )
+        if self < RGB_
+          Hornetseye::RGB element_type.align( context )
+        else
+          super context
+        end
+      end
+    end
+    Node.extend Match
+  end
+  module Operations
+    define_unary_op :r, :scalar
+    define_unary_op :g, :scalar
+    define_unary_op :b, :scalar
+    define_unary_op :swap_rgb
+    def r_with_decompose
+      if typecode == OBJECT or is_a?( Variable )
+        r_without_decompose
+      elsif typecode < RGB_
+        decompose 0
+      else
+        self
+      end
+    end
+    alias_method_chain :r, :decompose
+    def r=( value )
+      if typecode < RGB_
+        decompose( 0 )[] = value
+      elsif typecode == OBJECT
+        self[] = Hornetseye::lazy do
+          value * RGB.new( 1, 0, 0 ) + g * RGB.new( 0, 1, 0 ) + b * RGB.new( 0, 0, 1 )
+        end
+      else
+        raise "Cannot assign red channel to object of type #{array_type.inspect}"
+      end
+    end
+    def g_with_decompose
+      if typecode == OBJECT or is_a?( Variable )
+        g_without_decompose
+      elsif typecode < RGB_
+        decompose 1
+      else
+        self
+      end
+    end
+    alias_method_chain :g, :decompose
+    def g=( value )
+      if typecode < RGB_
+        decompose( 1 )[] = value
+      elsif typecode == OBJECT
+        self[] = Hornetseye::lazy do
+          r * RGB.new( 1, 0, 0 ) + value * RGB.new( 0, 1, 0 ) + b * RGB.new( 0, 0, 1 )
+        end
+      else
+        raise "Cannot assign green channel to object of type #{array_type.inspect}"
+      end
+    end
+    def b_with_decompose
+      if typecode == OBJECT or is_a?( Variable )
+        b_without_decompose
+      elsif typecode < RGB_
+        decompose 2
+      else
+        self
+      end
+    end
+    alias_method_chain :b, :decompose
+    def b=( value )
+      if typecode < RGB_
+        decompose( 2 )[] = value
+      elsif typecode == OBJECT
+        self[] = Hornetseye::lazy do
+          r * RGB.new( 1, 0, 0 ) + g * RGB.new( 0, 1, 0 ) + value * RGB.new( 0, 0, 1 )
+        end
+      else
+        raise "Cannot assign blue channel to object of type #{array_type.inspect}"
+      end
+    end
+    def swap_rgb_with_scalar
+      if typecode == OBJECT or typecode < RGB_
+        swap_rgb_without_scalar
+      else
+        self
+      end
+    end
+    alias_method_chain :swap_rgb, :scalar
+    def histogram_with_rgb( *ret_shape )
+      if typecode < RGB_
+        [ r, g, b ].histogram *ret_shape
+      else
+        histogram_without_rgb *ret_shape
+      end
+    end
+    alias_method_chain :histogram, :rgb
+    def lut_with_rgb( table, options = {} )
+      if typecode < RGB_
+        [ r, g, b ].lut table, options
+      else
+        lut_without_rgb table, options
+      end
+    end
+    alias_method_chain :lut, :rgb
+  end
+  def RGB( arg, g = nil, b = nil )
+    if g.nil? and b.nil?
+      retval = Class.new RGB_
+      retval.element_type = arg
+      retval
+    else
+      RGB.new arg, g, b
+    end
+  end
+  module_function :RGB
+  BYTERGB   = RGB BYTE
+  UBYTERGB  = RGB UBYTE
+  SINTRGB   = RGB SINT
+  USINTRGB  = RGB USINT
+  INTRGB    = RGB INT
+  UINTRGB   = RGB UINT
+  LONGRGB   = RGB LONG
+  ULONGRGB  = RGB ULONG
+  SFLOATRGB = RGB SFLOAT
+  DFLOATRGB = RGB DFLOAT
+  def BYTERGB( value )
+    BYTERGB.new value
+  end
+  def UBYTERGB( value )
+    UBYTERGB.new value
+  end
+  def SINTRGB( value )
+    SINTRGB.new value
+  end
+  def USINTRGB( value )
+    USINTRGB.new value
+  end
+  def INTRGB( value )
+    INTRGB.new value
+  end
+  def UINTRGB( value )
+    UINTRGB.new value
+  end
+  def LONGRGB( value )
+    LONGRGB.new value
+  end
+  def ULONGRGB( value )
+    ULONGRGB.new value
+  end
+  def SFLOATRGB( value )
+    SFLOATRGB.new value
+  end
+  def DFLOATRGB( value )
+    DFLOATRGB.new value
+  end
+  module_function :BYTERGB
+  module_function :UBYTERGB
+  module_function :SINTRGB
+  module_function :USINTRGB
+  module_function :INTRGB
+  module_function :UINTRGB
+  module_function :LONGRGB
+  module_function :ULONGRGB
+  module_function :SFLOATRGB
+  module_function :DFLOATRGB
+end
+class Numeric
+  def r
+    self
+  end
+  def g
+    self
+  end
+  def b
+    self
+  end
+  def swap_rgb
+    self
+  end
+end
+class Fixnum
+  if method_defined? :rpower
+    def power_with_rgb( other )
+      if other.is_a? Hornetseye::RGB
+        x, y = other.coerce self
+        x ** y
+      else
+        power_without_rgb other
+      end
+    end
+    alias_method_chain :**, :rgb, :power
+  end
+end
+module Math
+  def sqrt_with_rgb( c )
+    if c.is_a? Hornetseye::RGB
+      Hornetseye::RGB.new sqrt( c.r ), sqrt( c.g ), sqrt( c.b )
+    else
+      sqrt_without_rgb c
+    end
+  end
+  alias_method_chain :sqrt, :rgb
+  module_function :sqrt_without_rgb
+  module_function :sqrt
+end
+\end{lstlisting}
+\subsection{multiarray/sequence.rb}\label{cha:multiarray-sequence-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Sequence
+    class << self
+      def new( element_type, size )
+        MultiArray.new element_type, size
+      end
+      def import( typecode, string, size )
+        t = Hornetseye::Sequence typecode, size
+        if string.is_a? Malloc
+          memory = string
+        else
+          memory = Malloc.new t.storage_size
+          memory.write string
+        end
+        t.new memory
+      end
+      def []( *args )
+        target = Node.fit args
+        if target.dimension == 0
+          target = Hornetseye::Sequence target, 0
+        elsif target.dimension > 1
+          target = Hornetseye::Sequence OBJECT, args.size
+        end
+        target[ *args ]
+      end
+    end
+  end
+  class Sequence_
+    class << self
+      attr_accessor :element_type
+      attr_accessor :num_elements
+      def default
+        Hornetseye::lazy( num_elements ) do |i|
+          if element_type.dimension > 0
+            element = element_type.default
+          else
+            element = element_type.new
+          end
+        end
+      end
+      def indgen( offset = 0, increment = 1 )
+        Hornetseye::lazy( num_elements ) do |i|
+          ( element_type.size * increment * i +
+            element_type.indgen( offset, increment ) ).to_type typecode
+        end
+      end
+      def random( n = 1 )
+        n = typecode.maxint.new n unless n.is_a? Node
+        retval = new
+        unless compilable? and dimension > 0
+          Random.new( retval, n ).demand
+        else
+          GCCFunction.run Random.new( retval, n )
+        end
+        retval
+      end
+      def []( *args )
+        retval = new
+        recursion = lambda do |element,args|
+          if element.dimension > 0
+            args.each_with_index do |arg,i|
+              recursion.call element.element( i ), arg
+            end
+          else
+            element[] = args
+          end
+        end
+        recursion.call retval, args
+        retval
+      end
+      def shape
+        element_type.shape + [ num_elements ]
+      end
+      def width
+        shape[0]
+      end
+      def height
+        shape[1]
+      end
+      def size
+        num_elements * element_type.size
+      end
+      def storage_size
+        num_elements * element_type.storage_size
+      end
+      def empty?
+        size == 0
+      end
+      def typecode
+        element_type.typecode
+      end
+      def basetype
+        element_type.basetype
+      end
+      def array_type
+        self
+      end
+      def pointer_type
+        self
+      end
+      def dimension
+        element_type.dimension + 1
+      end
+      def check_shape( *args )
+        _shape = shape
+        args.each do |arg|
+          _arg_shape = arg.shape
+          if _shape.size < _arg_shape.size
+            raise "#{arg.inspect} has #{arg.dimension} dimension(s) " +
+                  "but should not have more than #{dimension}"
+          end
+          if ( _shape + _arg_shape ).all? { |s| s.is_a? Integer }
+            if _shape.last( _arg_shape.size ) != _arg_shape
+              raise "#{arg.inspect} has shape #{arg.shape.inspect} " +
+                    "(does not match last value(s) of #{shape.inspect})"
+            end
+          end
+        end
+      end
+      def rgb?
+        element_type.rgb?
+      end
+      def identity
+        self
+      end
+      def bool
+        Hornetseye::Sequence element_type.bool, num_elements
+      end
+      def coercion_bool( other )
+        coercion( other ).bool
+      end
+      def scalar
+        Hornetseye::Sequence element_type.scalar, num_elements
+      end
+      def float_scalar
+        Hornetseye::Sequence element_type.float_scalar, num_elements
+      end
+      def maxint
+        Hornetseye::Sequence element_type.maxint, num_elements
+      end
+      def coercion_maxint( other )
+        coercion( other ).maxint
+      end
+      def byte
+        Hornetseye::Sequence element_type.byte, num_elements
+      end
+      def coercion_byte( other )
+        coercion( other ).byte
+      end
+      def float
+        Hornetseye::Sequence element_type.float, num_elements
+      end
+      def floating( other )
+        coercion( other ).float
+      end
+      def cond( a, b )
+        t = a.coercion b
+        Hornetseye::MultiArray( t.typecode, *shape ).coercion t
+      end
+      def to_type( dest )
+        Hornetseye::Sequence element_type.to_type( dest ), num_elements
+      end
+      def inspect
+        if element_type and num_elements
+          if dimension == 1
+            retval = "Sequence(#{typecode.inspect},#{num_elements.inspect})"
+          else
+            retval = "MultiArray(#{typecode.inspect},#{shape.join ','})"
+          end
+          ( class << self; self; end ).instance_eval do
+            define_method( :inspect ) { retval }
+          end
+          retval
+        else
+          'MultiArray(?,?)'
+        end
+      end
+      def to_s
+        descriptor( {} )
+      end
+      def descriptor( hash )
+        if element_type and num_elements
+          if dimension == 1
+            "Sequence(#{typecode.descriptor( hash )},#{num_elements.to_s})"
+          else
+            "MultiArray(#{typecode.descriptor( hash )},#{shape.join ','})"
+          end
+        else
+          'MultiArray(?,?)'
+        end
+      end
+      def ==( other )
+        other.is_a? Class and other < Sequence_ and
+          other.element_type == element_type and
+          other.num_elements == num_elements
+      end
+      def coercion( other )
+        if other < Sequence_
+          Hornetseye::Sequence element_type.coercion( other.element_type ),
+                               num_elements
+        else
+          Hornetseye::Sequence element_type.coercion( other ),
+                               num_elements
+        end
+      end
+      def coerce( other )
+        if other < Sequence_
+          return other, self
+        else
+          return Hornetseye::Sequence( other, num_elements ), self
+        end
+      end
+      def new( memory = nil )
+        MultiArray.new typecode, *( shape + [ :memory => memory ] )
+      end
+      def compilable?
+        element_type.compilable?
+      end
+    end
+    module Match
+      def fit( *values )
+        n = values.inject 0 do |size,value|
+          value.is_a?( Array ) ? [ size, value.size ].max : size
+        end
+        if n > 0
+          elements = values.inject [] do |flat,value|
+            flat + ( value.is_a?( Array ) ? value : [ value ] )
+          end
+          Hornetseye::Sequence fit( *elements ), n
+        else
+          super *values
+        end
+      end
+      def align( context )
+        if self < Sequence_
+          Hornetseye::Sequence element_type.align( context ), num_elements
+        else
+          super context
+        end
+      end
+    end
+    Node.extend Match
+  end
+  def Sequence( element_type, num_elements )
+    retval = Class.new Sequence_
+    retval.element_type = element_type
+    retval.num_elements = num_elements
+    retval
+  end
+  module_function :Sequence
+end
+\end{lstlisting}
+\subsection{multiarray/shortcuts.rb}\label{cha:multiarray-shortcuts-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  module MultiArrayConstructor
+    def constructor_shortcut( target )
+      define_method( target.to_s.downcase ) do |*args|
+        new target, *args
+      end
+    end
+    module_function :constructor_shortcut
+    constructor_shortcut OBJECT
+    constructor_shortcut BOOL
+    constructor_shortcut BYTE
+    constructor_shortcut UBYTE
+    constructor_shortcut SINT
+    constructor_shortcut USINT
+    constructor_shortcut INT
+    constructor_shortcut UINT
+    constructor_shortcut LONG
+    constructor_shortcut ULONG
+    constructor_shortcut SFLOAT
+    constructor_shortcut DFLOAT
+    constructor_shortcut SCOMPLEX
+    constructor_shortcut DCOMPLEX
+    constructor_shortcut BYTERGB
+    constructor_shortcut UBYTERGB
+    constructor_shortcut SINTRGB
+    constructor_shortcut USINTRGB
+    constructor_shortcut INTRGB
+    constructor_shortcut UINTRGB
+    constructor_shortcut LONGRGB
+    constructor_shortcut ULONGRGB
+    constructor_shortcut SFLOATRGB
+    constructor_shortcut DFLOATRGB
+  end
+  Sequence.extend MultiArrayConstructor
+  MultiArray.extend MultiArrayConstructor
+  module MultiArrayConversion
+    def to_type_shortcut( target )
+      define_method( "to_#{target.to_s.downcase}" ) do
+        to_type target
+      end
+    end
+    module_function :to_type_shortcut
+    to_type_shortcut OBJECT
+    to_type_shortcut BOOL
+    to_type_shortcut BYTE
+    to_type_shortcut UBYTE
+    to_type_shortcut SINT
+    to_type_shortcut USINT
+    to_type_shortcut INT
+    to_type_shortcut UINT
+    to_type_shortcut LONG
+    to_type_shortcut ULONG
+    to_type_shortcut SFLOAT
+    to_type_shortcut DFLOAT
+    to_type_shortcut SCOMPLEX
+    to_type_shortcut DCOMPLEX
+    to_type_shortcut BYTERGB
+    to_type_shortcut UBYTERGB
+    to_type_shortcut SINTRGB
+    to_type_shortcut USINTRGB
+    to_type_shortcut INTRGB
+    to_type_shortcut UINTRGB
+    to_type_shortcut LONGRGB
+    to_type_shortcut ULONGRGB
+    to_type_shortcut SFLOATRGB
+    to_type_shortcut DFLOATRGB
+  end
+  Node.class_eval { include MultiArrayConversion }
+  module ReaderConversion
+    def read_shortcut( target )
+      define_method( "read_#{target.to_s.downcase}" ) do
+        read.to_type target
+      end
+    end
+    module_function :read_shortcut
+    read_shortcut OBJECT
+    read_shortcut BOOL
+    read_shortcut BYTE
+    read_shortcut UBYTE
+    read_shortcut SINT
+    read_shortcut USINT
+    read_shortcut INT
+    read_shortcut UINT
+    read_shortcut LONG
+    read_shortcut ULONG
+    read_shortcut SFLOAT
+    read_shortcut DFLOAT
+    read_shortcut SCOMPLEX
+    read_shortcut DCOMPLEX
+    read_shortcut BYTERGB
+    read_shortcut UBYTERGB
+    read_shortcut SINTRGB
+    read_shortcut USINTRGB
+    read_shortcut INTRGB
+    read_shortcut UINTRGB
+    read_shortcut LONGRGB
+    read_shortcut ULONGRGB
+    read_shortcut SFLOATRGB
+    read_shortcut DFLOATRGB
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/store.rb}\label{cha:multiarray-store-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Store < Node
+    def initialize( dest, source )
+      @dest, @source = dest, source
+    end
+    def descriptor( hash )
+      "Store(#{@dest.descriptor( hash )},#{@source.descriptor( hash )})"
+    end
+    def array_type
+      @dest.array_type
+    end
+    def demand
+      if variables.empty?
+        if dimension > 0
+          shape.last.times do |i|
+            dest = @dest.element INT.new( i )
+            source = @source.dimension == 0 ? @source :
+                                              @source.element( INT.new( i ) )
+            Store.new( dest, source ).demand
+          end  
+        elsif @dest.class < Pointer_
+          @dest.store @source.demand
+        else
+          @dest.assign @source.demand
+        end
+        @dest
+      else
+        super
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @source.subst( hash )
+    end
+    def variables
+      @dest.variables + @source.variables
+    end
+    def strip
+      vars1, values1, term1 = @dest.strip
+      vars2, values2, term2 = @source.strip
+      return vars1 + vars2, values1 + values2, Store.new( term1, term2 )
+    end
+    def compilable?
+      @dest.compilable? and @source.compilable?
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/unmask.rb}\label{cha:multiarray-unmask-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Unmask < Node
+    class << self
+      def finalised?
+        false
+      end
+    end
+    def initialize( dest, source, m, index, default )
+      @dest, @source, @m, @index, @default = dest, source, m, index, default
+    end
+    def descriptor( hash )
+      "Unmask(#{@dest.descriptor( hash )},#{@source.descriptor( hash )}," +
+        "#{@m.descriptor( hash )},#{@index.descriptor( hash )}," +
+        "#{@default.descriptor( hash )})"
+    end
+    def array_type
+      @dest.array_type
+    end
+    def demand
+      if variables.empty?
+        index = @index.simplify
+        if @m.dimension > 0
+          @m.shape.last.times do |i|
+            m = @m.element INT.new( i )
+            dest = @dest.element INT.new( i )
+            default = @default.dimension > 0 ?
+                      @default.element( INT.new( i ) ) : @default
+            Unmask.new( dest, @source, m, index, default ).demand
+          end  
+        else
+          @m.if_else( proc do
+            Store.new( @dest, @source.element( index ) ).demand
+            index.assign index + 1
+          end, proc do
+            Store.new( @dest, @default ).demand
+          end )
+        end
+        if @index.is_a? Pointer_
+          @index.store index
+        else
+          @index.assign index
+        end
+        @dest
+      else
+        super
+      end
+    end
+    def subst( hash )
+      self.class.new @dest.subst( hash ), @source.subst( hash ), @m.subst( hash ),
+                     @index.subst( hash ), @default.subst( hash )
+    end
+    def variables
+      @dest.variables + @source.variables + @m.variables + @index.variables +
+        @default.variables
+    end
+    def strip
+      stripped = [ @dest, @source, @m, @index, @default ].
+        collect { |value| value.strip }
+      return stripped.inject( [] ) { |vars,elem| vars + elem[ 0 ] },
+           stripped.inject( [] ) { |values,elem| values + elem[ 1 ] },
+           self.class.new( *stripped.collect { |elem| elem[ 2 ] } )
+    end
+    def compilable?
+      [ @dest, @source, @m, @index, @default ].all? { |value| value.compilable? }
+    end
+  end
+end
+\end{lstlisting}
+\subsection{multiarray/variable.rb}\label{cha:multiarray-variable-rb}
+\lstset{language=Ruby,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+module Hornetseye
+  class Variable < Node
+    attr_reader :meta
+    def initialize( meta )
+      @meta = meta
+    end
+    def inspect
+      "Variable(#{@meta.inspect})"
+    end
+    def descriptor( hash )
+      if hash[ self ]
+        "Variable#{hash[ self ]}(#{@meta.descriptor( hash )})"
+      else
+        "Variable(#{@meta.descriptor( hash )})"
+      end
+    end
+    def size
+      @meta.size
+    end
+    def size=( value )
+      @meta.size = value
+    end
+    def array_type
+      @meta.array_type
+    end
+    def strip
+      meta_vars, meta_values, meta_term = @meta.strip
+      if meta_vars.empty?
+        return [], [], self
+      else
+        return meta_vars, meta_values, Variable.new( meta_term )
+      end
+    end
+    def subst( hash )
+      if hash[ self ]
+        hash[ self ]
+      elsif not @meta.variables.empty? and hash[ @meta.variables.to_a.first ]
+        Variable.new @meta.subst( hash )
+      else
+        self
+      end
+    end
+    def variables
+      Set[ self ]
+    end
+    def lookup( value, stride )
+      Lookup.new self, value, stride
+    end
+    def skip( index, start )
+      if index == self
+        self + start
+      else
+        self
+      end
+    end
+  end
+end
+\end{lstlisting}

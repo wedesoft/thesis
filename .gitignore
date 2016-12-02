@@ -1,0 +1,11 @@
+aclocal.m4
+Makefile
+Makefile.in
+configure
+install-sh
+*.cache
+*.tar.bz2
+*.log
+*.aux
+*.pdf
+.*.un~

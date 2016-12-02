@@ -1,0 +1,196 @@
+\subsection{error.hh}\label{cha:error-hh}
+\lstset{language=C++,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+#ifndef ERROR_HH
+#define ERROR_HH
+#include <exception>
+#include <sstream>
+class Error: public std::exception
+{
+public:
+  Error(void) {}
+  Error( Error &e ): std::exception( e )
+    { m_message << e.m_message.str(); }
+  virtual ~Error(void) throw() {}
+  template< typename T >
+  std::ostream &operator<<( const T &t )
+    { m_message << t; return m_message; }
+  std::ostream &operator<<( std::ostream& (*__pf)(std::ostream&) )
+    { (*__pf)( m_message ); return m_message; }
+  virtual const char* what(void) const throw() {
+    temp = m_message.str();
+    return temp.c_str();
+  }
+protected:
+  std::ostringstream m_message;
+  mutable std::string temp;
+};
+#define ERRORMACRO( condition, class, params, message ) \
+  if ( !( condition ) ) {                               \
+    class _e params;                                    \
+    _e << message;                                      \
+    throw _e;                                           \
+  };
+#endif
+\end{lstlisting}
+\subsection{init.cc}\label{cha:init-cc}
+\lstset{language=C++,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+#include "malloc.hh"
+#ifdef WIN32
+#define DLLEXPORT __declspec(dllexport)
+#define DLLLOCAL
+#else
+#define DLLEXPORT __attribute__ ((visibility("default")))
+#define DLLLOCAL __attribute__ ((visibility("hidden")))
+#endif
+extern "C" DLLEXPORT void Init_malloc(void);
+extern "C" {
+  void Init_malloc(void)
+  {
+    VALUE rbHornetseye = rb_define_module( "Hornetseye" );
+    Malloc::init( rbHornetseye );
+    rb_require( "malloc_ext.rb" );
+  }
+}
+\end{lstlisting}
+\subsection{malloc.cc}\label{cha:malloc-cc}
+\lstset{language=C++,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+#include "error.hh"
+#include "malloc.hh"
+#include <iostream>
+using namespace std;
+#ifdef WIN32
+#define DLLEXPORT __declspec(dllexport)
+#define DLLLOCAL
+#else
+#define DLLEXPORT __attribute__ ((visibility("default")))
+#define DLLLOCAL __attribute__ ((visibility("hidden")))
+#endif
+VALUE Malloc::cRubyClass = Qnil;
+VALUE Malloc::init( VALUE rbModule )
+{
+  cRubyClass = rb_define_class_under( rbModule, "Malloc", rb_cObject );
+  rb_define_singleton_method( cRubyClass, "orig_new",
+                              RUBY_METHOD_FUNC( mallocNew ), 1 );
+  rb_define_method( cRubyClass, "orig_plus",
+                    RUBY_METHOD_FUNC( mallocPlus ), 1 );
+  rb_define_method( cRubyClass, "orig_read",
+                    RUBY_METHOD_FUNC( mallocRead ), 1 );
+  rb_define_method( cRubyClass, "orig_write",
+                    RUBY_METHOD_FUNC( mallocWrite ), -1 );
+  return cRubyClass;
+}
+VALUE Malloc::mallocNew( VALUE rbClass, VALUE rbSize )
+{
+  VALUE retVal = Qnil;
+  try {
+    unsigned int size = NUM2UINT( rbSize );
+    char *self = ALLOC_N( char, size );
+    ERRORMACRO( self != NULL, Error, , "Failed to allocate " << size
+                << " bytes of memory" );
+    retVal = Data_Wrap_Struct( rbClass, 0, xfree, (void *)self );
+  } catch( std::exception &e ) {
+    rb_raise( rb_eRuntimeError, "%s", e.what() );
+  };
+  return retVal;
+}
+VALUE Malloc::mallocPlus( VALUE rbSelf, VALUE rbOffset )
+{
+  VALUE retVal = Qnil;
+  try {
+    char *self; Data_Get_Struct( rbSelf, char, self );
+    int offset = NUM2INT( rbOffset );
+    ERRORMACRO( offset >= 0, Error, , "Offset must be non-negative (but was "
+                << offset << ')' );
+    retVal = Data_Wrap_Struct( cRubyClass, 0, 0, (void *)( self + offset ) );
+  } catch( std::exception &e ) {
+    rb_raise( rb_eRuntimeError, "%s", e.what() );
+  };
+  return retVal;
+}
+VALUE Malloc::mallocRead( VALUE rbSelf, VALUE rbLength )
+{
+  char *self; Data_Get_Struct( rbSelf, char, self );
+  unsigned int length = NUM2UINT( rbLength );
+  return rb_str_new( self, length );
+}
+VALUE Malloc::mallocWrite( int argc, VALUE *rbArgv, VALUE rbSelf )
+{
+  VALUE retVal = Qnil;
+  try {
+    char *self; Data_Get_Struct( rbSelf, char, self );
+    ERRORMACRO( argc == 1 || argc == 2, Error, , "Malloc#write accepts "
+                  "one or two arguments (not " << argc << ")" );
+    if ( argc == 1 ) {
+      VALUE rbString = rbArgv[0];
+      memcpy( self, StringValuePtr( rbString ), RSTRING_LEN( rbString ) );
+      retVal = rbString;
+    } else {
+      VALUE rbOther = rbArgv[0];
+      VALUE rbSize = rbArgv[1];
+      char *other; Data_Get_Struct( rbOther, char, other );
+      int size = NUM2INT( rbSize );
+      memcpy( self, other, size );
+      retVal = rbOther;
+    };
+  } catch ( std::exception &e ) {
+    rb_raise( rb_eRuntimeError, "%s", e.what() );
+  };
+  return retVal;
+}
+\end{lstlisting}
+\subsection{malloc.hh}\label{cha:malloc-hh}
+\lstset{language=C++,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+#ifndef MALLOC_HH
+#define MALLOC_HH
+#include "rubyinc.hh"
+class Malloc
+{
+public:
+  static VALUE cRubyClass;
+  static VALUE init( VALUE rbModule );
+  static VALUE mallocNew( VALUE rbClass, VALUE rbSize );
+  static VALUE mallocPlus( VALUE rbSelf, VALUE rbOffset );
+  static VALUE mallocRead( VALUE rbSelf, VALUE rbLength );
+  static VALUE mallocWrite( int argc, VALUE *rbArgv, VALUE rbSelf );
+};
+#endif
+\end{lstlisting}
+\subsection{rubyinc.hh}\label{cha:rubyinc-hh}
+\lstset{language=C++,frame=single,basicstyle=\ttfamily\bfseries\color{codegray}\scriptsize}
+\begin{lstlisting}
+#ifndef HORNETSEYE_RUBYINC_HH
+#define HORNETSEYE_RUBYINC_HH
+#ifdef RSHIFT
+#undef RSHIFT
+#endif
+#define gettimeofday rubygettimeofday
+#define timezone rubygettimezone
+#include <ruby.h>
+#undef timezone
+#undef gettimeofday
+#ifdef read
+#undef read
+#endif
+#ifdef write
+#undef write
+#endif
+#ifdef RGB
+#undef RGB
+#endif
+#ifndef RUBY_VERSION_NUMBER
+#define RUBY_VERSION_NUMBER ( RUBY_VERSION_MAJOR * 10000 + \
+                              RUBY_VERSION_MINOR * 100 + \
+                              RUBY_VERSION_TEENY )
+#endif
+#ifndef RUBY_METHOD_FUNC
+#define RUBY_METHOD_FUNC(func) ((VALUE (*)(ANYARGS))func)
+#endif
+#ifndef xfree
+#define xfree free
+#endif
+#endif
+\end{lstlisting}
