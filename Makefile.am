@@ -94,7 +94,7 @@ thesis2.pdf: thesis2.tex thesis2.bbl thesis2.ind xmpincl.sty architecture.pdf \
 	shulogo.pdf operatortable.pdf operatortable.pstex_t overview.pdf fubk.png \
 	grey.png strides.pdf strides.pstex_t cycle-static.pdf cycle-dynamic.pdf \
 	matching.pdf eager.pdf lazy.pdf select.pdf memory.pdf \
-	malloc-1.4.0.tgz multiarray-1.0.1.tgz \
+	malloc-1.5.1.tgz multiarray-1.0.4.tgz \
 	globe.tgz diagonal.pdf diagonal.pstex_t goes.jpg pseudo.jpg \
 	blur.jpg integrated.jpg integral.jpg interfaces.jpg \
 	y.jpg ycr.jpg ycb.jpg colours.jpg tilt00.jpg mr-knee.png \
@@ -151,16 +151,16 @@ thesis2.pdf: thesis2.tex thesis2.bbl thesis2.ind xmpincl.sty architecture.pdf \
 	$(PDFFONTS) $@
 	( sleep 1 && touch thesis2.aux ) &
 
-malloc-1.4.0.tgz: $(MALLOC)/pkg/malloc-1.4.0.tgz
+malloc-1.5.1.tgz: $(MALLOC)/pkg/malloc-1.5.1.tgz
 	$(LN_S) -f $< $@
 
-$(MALLOC)/pkg/malloc-1.4.0.tgz:
+$(MALLOC)/pkg/malloc-1.5.1.tgz:
 	cd $(MALLOC) && $(RAKE) package
 
-multiarray-1.0.1.tgz: $(MULTIARRAY)/pkg/multiarray-1.0.1.tgz
+multiarray-1.0.4.tgz: $(MULTIARRAY)/pkg/multiarray-1.0.4.tgz
 	$(LN_S) -f $< $@
 
-$(MULTIARRAY)/pkg/multiarray-1.0.1.tgz:
+$(MULTIARRAY)/pkg/multiarray-1.0.4.tgz:
 	cd $(MULTIARRAY) && $(RAKE) package
 
 %.bbl: %.bib %.aux
