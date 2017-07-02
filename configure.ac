@@ -21,6 +21,7 @@ AC_CHECK_PROG(RUBY,ruby,ruby)
 AC_CHECK_PROG(RAKE,rake,rake)
 AC_CHECK_PROG(POVRAY,povray,povray)
 AC_CHECK_PROG(MENCODER,mencoder,mencoder)
+AC_CHECK_PROG(MPLAYER,mplayer,mplayer)
 AC_CHECK_PROG(DOT,dot,dot)
 AC_PROG_CXX
 

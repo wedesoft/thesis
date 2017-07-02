@@ -380,31 +380,30 @@ grid.avi: grid.erb grid.ini calibration2.txt chequer.png grid.rb
 	rm -f tmp*.png
 
 cal0.jpg cal1.jpg cal2.jpg cal3.jpg cal4.jpg cal5.jpg: skip.rb calibration2.avi
-	$(RUBY) skip.rb calibration2.avi cal 19 138 226 275 533 679
-	$(CONVERT) cal0.png -quality 85 cal0.jpg
-	$(CONVERT) cal1.png -quality 85 cal1.jpg
-	$(CONVERT) cal2.png -quality 85 cal2.jpg
-	$(CONVERT) cal3.png -quality 85 cal3.jpg
-	$(CONVERT) cal4.png -quality 85 cal4.jpg
-	$(CONVERT) cal5.png -quality 85 cal5.jpg
+	$(CONVERT) 00000019.png -quality 85 cal0.jpg
+	$(CONVERT) 00000138.png -quality 85 cal1.jpg
+	$(CONVERT) 00000226.png -quality 85 cal2.jpg
+	$(CONVERT) 00000275.png -quality 85 cal3.jpg
+	$(CONVERT) 00000533.png -quality 85 cal4.jpg
+	$(CONVERT) 00000679.png -quality 85 cal5.jpg
 
 grid0.png grid1.png grid2.png grid3.png grid4.png grid5.png: skip.rb grid.avi
-	$(RUBY) skip.rb grid.avi grid 19 138 226 275 533 679
-	$(CONVERT) grid0.png -colors 127 grid0.png
-	$(CONVERT) grid1.png -colors 127 grid1.png
-	$(CONVERT) grid2.png -colors 127 grid2.png
-	$(CONVERT) grid3.png -colors 127 grid3.png
-	$(CONVERT) grid4.png -colors 127 grid4.png
-	$(CONVERT) grid5.png -colors 127 grid5.png
+	$(MPLAYER) -vo png grid.avi
+	$(CONVERT) 00000019.png -colors 127 grid0.png
+	$(CONVERT) 00000138.png -colors 127 grid1.png
+	$(CONVERT) 00000226.png -colors 127 grid2.png
+	$(CONVERT) 00000275.png -colors 127 grid3.png
+	$(CONVERT) 00000533.png -colors 127 grid4.png
+	$(CONVERT) 00000679.png -colors 127 grid5.png
 
 gridcalib0.jpg gridcalib1.jpg gridcalib2.jpg gridcalib3.jpg gridcalib4.jpg gridcalib5.jpg: skip.rb gridcalib.avi
-	$(RUBY) skip.rb gridcalib.avi gridcalib 19 138 226 275 533 679
-	$(CONVERT) gridcalib0.png -quality 85 gridcalib0.jpg
-	$(CONVERT) gridcalib1.png -quality 85 gridcalib1.jpg
-	$(CONVERT) gridcalib2.png -quality 85 gridcalib2.jpg
-	$(CONVERT) gridcalib3.png -quality 85 gridcalib3.jpg
-	$(CONVERT) gridcalib4.png -quality 85 gridcalib4.jpg
-	$(CONVERT) gridcalib5.png -quality 85 gridcalib5.jpg
+	$(MPLAYER) -vo png gridcalib.avi
+	$(CONVERT) 00000019.png -quality 85 gridcalib0.jpg
+	$(CONVERT) 00000138.png -quality 85 gridcalib1.jpg
+	$(CONVERT) 00000226.png -quality 85 gridcalib2.jpg
+	$(CONVERT) 00000275.png -quality 85 gridcalib3.jpg
+	$(CONVERT) 00000533.png -quality 85 gridcalib4.jpg
+	$(CONVERT) 00000679.png -quality 85 gridcalib5.jpg
 
 tensor: tensor.cc
 	$(CXX) -O -o $@ $<
